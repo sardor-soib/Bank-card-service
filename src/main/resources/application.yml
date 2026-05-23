@@ -1,0 +1,80 @@
+spring:
+  application:
+    name: bank-rest-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/bank-rest-service
+    username: postgres
+    password: 12345
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 5
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: bank-rest-service
+    hibernate:
+      ddl-auto: none
+  liquibase:
+    enabled: true
+    change-log: classpath:db/migration/db.changelog-master.yaml
+    default-schema: public
+    liquibase-schema: public
+  thymeleaf:
+    enabled: true
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/resources/templates,src/main/resources/static
+    livereload:
+      enabled: true
+      port: 35729
+    remote:
+      restart:
+        enabled: true
+  web:
+    resources:
+      cache:
+        period: 0
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "https://${auth0.domain}/"
+
+logging:
+  level:
+    root: INFO
+    com.example.bankcards: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate: INFO
+    org.liquibase: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
+  file:
+    name: application.log
+    max-size: 10MB
+    max-history: 5
+
+server:
+  port: 8080
+
+auth0:
+  domain: "dev-ruik4gzrk5x137ze.eu.auth0.com"
+  jwks-url: "https://${auth0.domain}/.well-known/jwks.json"
+  audience: "https://localhost:8080/"
+
+springdoc:
+  package-to-scan: com.example.bankcards.controller
+  tagsSorting: alpha
+  api-docs:
+    path: /api-docs.yaml
+  swagger-ui:
+    path: /swagger-ui.html

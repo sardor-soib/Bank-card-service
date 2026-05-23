@@ -1,0 +1,25 @@
+package com.example.bankcards.service;
+
+import com.example.bankcards.dto.TransactionDTO;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+public interface TransactionManager {
+
+    boolean isExists(@NotNull Long id);
+
+    TransactionDTO create(@NotNull TransactionDTO transactionDTO);
+
+    TransactionDTO findById(@NotNull Long id);
+
+    Page<TransactionDTO> findByUserId(@NotNull Long userId, Pageable pageable);
+
+    Page<TransactionDTO> findByCardId(@NotNull Long cardId, Pageable pageable);
+
+    Page<TransactionDTO> findAll(Pageable pageable);
+
+    TransactionDTO update(@NotNull Long id, @NotNull TransactionDTO transactionDTO);
+
+    void remove(@NotNull Long id);
+}

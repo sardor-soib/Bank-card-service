@@ -1,0 +1,178 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: developer
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS "bank-rest-service"
+  - changeSet:
+      id: 1
+      author: developer
+      changes:
+        - createTable:
+            schemaName: bank-rest-service
+            tableName: users
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: full_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: phone_number
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password_hash
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_role
+                  type: VARCHAR(50)
+              - column:
+                  name: user_status
+                  type: VARCHAR(50)
+
+        - createTable:
+            schemaName: bank-rest-service
+            tableName: cards
+            columns:
+              - column:
+                  name: card_id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: bin_number
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_four
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: masked_pan
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pan_hash
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expiration_month
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expiration_year
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: card_brand
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: cvv
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: card_type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: card_status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: owner_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_cards_owner
+                    referencedTableName: users
+                    referencedColumnNames: user_id
+                    referencedTableSchemaName: bank-rest-service
+
+        - createTable:
+            schemaName: bank-rest-service
+            tableName: transactions
+            columns:
+              - column:
+                  name: transaction_id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: card_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transactions_card
+                    referencedTableName: cards
+                    referencedColumnNames: card_id
+                    referencedTableSchemaName: bank-rest-service
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_transactions_user
+                    referencedTableName: users
+                    referencedColumnNames: user_id
+                    referencedTableSchemaName: bank-rest-service
+              - column:
+                  name: amount
+                  type: DECIMAL(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transaction_type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transaction_time
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false

@@ -1,0 +1,18 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Debet Cards System - Containers
+
+Person(customer, "Customer/Admin", "Пользователь")
+
+System_Boundary(s1, "Cards System") {
+  Container(web, "Web UI", "Фронтенд в браузере")
+  Container(api, "Core API", "Spring Boot", "REST API + бизнес-логика")
+  ContainerDb(db, "PostgreSQL", "DB", "Карты, пользователи, транзакции")
+}
+
+Rel(customer, web, "Работает с UI", "HTTPS")
+Rel(web, api, "REST API", "HTTPS")
+Rel(api, db, "CRUD", "JDBC")
+
+@enduml

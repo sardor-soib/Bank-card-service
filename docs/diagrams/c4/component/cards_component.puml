@@ -1,0 +1,35 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Core API - Components
+
+Container_Boundary(api, "Core API (Spring Boot)") {
+
+  Component(cardController, "CardController", "Spring MVC Controller", "HTTP endpoints")
+  Component(userController, "UserController", "Spring MVC Controller", "HTTP endpoints")
+  Component(transactionController, "TransactionController", "Spring MVC Controller", "HTTP endpoints")
+
+  Component(cardService, "CardService", "Service", "Бизнес-операции по картам")
+  Component(userService, "UserService", "Service", "Бизнес-операции по пользователям")
+  Component(transactionService, "TransactionService", "Service", "Бизнес-операции по транзакциям")
+
+  Component("cardRepository", "CardRepository", "Repository", "Доступ к данным")
+  Component(userRepository, "UserRepository", "Repository", "Доступ к данным")
+  Component(transactionRepository, "TransactionRepository", "Repository", "Доступ к данным")
+
+  ComponentDb(db, "PostgreSQL", "DB", "cards/users/transactions")
+}
+
+Rel("cardController", "cardService", "calls")
+Rel("cardService", "cardRepository", "calls")
+Rel("cardRepository", db, "reads/writes")
+
+Rel("userController", "userService", "calls")
+Rel("userService", "userRepository", "calls")
+Rel("userRepository", db, "reads/writes")
+
+Rel("transactionController", "transactionService", "calls")
+Rel("transactionService", "transactionRepository", "calls")
+Rel("transactionRepository", db, "reads/writes")
+
+@enduml
