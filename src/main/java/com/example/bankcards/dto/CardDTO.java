@@ -1,11 +1,16 @@
 package com.example.bankcards.dto;
 
+import java.math.BigDecimal;
+
 public record CardDTO(
         Long id,
         String cardNumber,
         String cardHolderName,
         String expirationDate,
-        String cvv
+        String cvvHash,
+        BigDecimal balance,
+        String cardStatus,
+        Long userId
 ) {
 
     public static CardDTO.Builder builder() {
@@ -17,7 +22,10 @@ public record CardDTO(
         private String cardNumber;
         private String cardHolderName;
         private String expirationDate;
-        private String cvv;
+        private String cvvHash;
+        private BigDecimal balance;
+        private String cardStatus;
+        private Long userId;
 
         public CardDTO.Builder id(Long id) {
             this.id = id;
@@ -39,13 +47,28 @@ public record CardDTO(
             return this;
         }
 
-        public CardDTO.Builder cvv(String cvv) {
-            this.cvv = cvv;
+        public CardDTO.Builder cvvHash(String cvvHash) {
+            this.cvvHash = cvvHash;
+            return this;
+        }
+
+        public CardDTO.Builder balance(BigDecimal balance) {
+            this.balance = balance;
+            return this;
+        }
+
+        public CardDTO.Builder cardStatus(String cardStatus) {
+            this.cardStatus = cardStatus;
+            return this;
+        }
+
+        public CardDTO.Builder userId(Long userId) {
+            this.userId = userId;
             return this;
         }
 
         public CardDTO build() {
-            return new CardDTO(id, cardNumber, cardHolderName, expirationDate, cvv);
+            return new CardDTO(id, cardNumber, cardHolderName, expirationDate, cvvHash, balance, cardStatus, userId);
         }
     }
 }

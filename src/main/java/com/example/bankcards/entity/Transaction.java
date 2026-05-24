@@ -46,7 +46,27 @@ public class Transaction {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
-    public Transaction() {
+    public static Transaction createTransaction(
+            Card card,
+            User user,
+            BigDecimal amount,
+            Currency currency,
+            TransactionType transactionType,
+            TransactionStatus status
+    ) {
+        OffsetDateTime now = OffsetDateTime.now();
+
+        Transaction transaction = new Transaction();
+        transaction.card = card;
+        transaction.user = user;
+        transaction.amount = amount;
+        transaction.currency = currency;
+        transaction.transactionType = transactionType;
+        transaction.status = status;
+        transaction.transactionTime = now;
+        transaction.createdAt = now;
+
+        return transaction;
     }
 
 }

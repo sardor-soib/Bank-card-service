@@ -1,9 +1,11 @@
-package com.example.bankcards.service;
+package com.example.bankcards.service.impl;
 
 import com.example.bankcards.dto.CardDTO;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.CardRepository;
+import com.example.bankcards.service.CardManager;
+import com.example.bankcards.service.validation.TransactionValidator;
 import com.example.bankcards.util.CardMapper;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
@@ -14,6 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+
+import java.math.BigDecimal;
+import java.util.Optional;
 
 @Service
 @Validated
@@ -35,6 +40,31 @@ public class CardService implements CardManager {
     public boolean isExists(@NotNull Long id) {
         logger.info("Checking if card exists with ID {}", id);
         return cardRepository.existsById(id);
+    }
+
+    @Override
+    public void transferBalance(Long userId, Long sourceCardId, Long targetCardId, BigDecimal amount) {
+
+        logger.info("Transfer between user cards for userId {}, sourceCardId {}, targetCardId {}, amount {}", userId, sourceCardId, targetCardId, amount);
+
+        Optional<Card> sourceCard = cardRepository.findById(sourceCardId);
+        Optional<Card> targetCard = cardRepository.findById(targetCardId);
+
+        if (sourceCard.isEmpty() || targetCard.isEmpty()) {
+            logger.error("One of cards is not exists");
+            throw new ResourceNotFoundException("One of cards is not exists");
+        }
+
+        logger.info("Checking if cards are valid for transfer");
+        TransactionValidator.validateTransferBetweenUserCards(userId, sourceCard.get(), targetCard.get(), amount);
+        logger.info("Cards are valid for transfer");
+
+        logger.info("Performing transfer between cards");
+        sourceCard.get().debit(amount);
+        targetCard.get().credit(amount);
+        cardRepository.save(sourceCard.get());
+        cardRepository.save(targetCard.get());
+        logger.info("Transfer completed successfully");
     }
 
     @Override

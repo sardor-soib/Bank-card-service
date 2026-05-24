@@ -5,9 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
+
 public interface CardManager {
 
     boolean isExists(@NotNull Long id);
+
+    void transferBalance(Long userId, Long sourceCardId, Long targetCardId, BigDecimal amount);
 
     CardDTO create(@NotNull CardDTO cardDto);
 

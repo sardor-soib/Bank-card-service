@@ -5,6 +5,7 @@ import com.example.bankcards.util.CardStatus;
 import com.example.bankcards.util.CardType;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.util.Set;
 
 
@@ -39,8 +40,8 @@ public class Card {
     @Enumerated(EnumType.STRING)
     private CardBrand cardBrand;
 
-    @Column(name = "cvv", nullable = false)
-    private Integer cvv;
+    @Column(name = "cvv_hash", nullable = false)
+    private String cvvHash;
 
     @Column(name = "card_type", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -50,7 +51,9 @@ public class Card {
     @Enumerated(EnumType.STRING)
     private CardStatus cardStatus;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Column(name = "balance", nullable = false)
+    private BigDecimal balance;
+
     @JoinColumn(name = "owner_id")
     private User user;
 
@@ -61,8 +64,8 @@ public class Card {
     }
 
     public Card(String binNumber, String lastFour, String maskedPan, String panHash, Integer expirationMonth,
-                Integer expirationYear, CardBrand cardBrand, Integer cvv, CardType cardType, CardStatus cardStatus,
-                User user) {
+                Integer expirationYear, CardBrand cardBrand, String cvvHash, CardType cardType, CardStatus cardStatus,
+                BigDecimal balance, User user) {
         this.binNumber = binNumber;
         this.lastFour = lastFour;
         this.maskedPan = maskedPan;
@@ -70,10 +73,19 @@ public class Card {
         this.expirationMonth = expirationMonth;
         this.expirationYear = expirationYear;
         this.cardBrand = cardBrand;
-        this.cvv = cvv;
+        this.cvvHash = cvvHash;
         this.cardType = cardType;
         this.cardStatus = cardStatus;
+        this.balance = balance;
         this.user = user;
+    }
+
+    public void debit(BigDecimal amount) {
+        this.balance = this.balance.subtract(amount);
+    }
+
+    public void credit(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
     }
 
     public Long getId() {
@@ -108,8 +120,8 @@ public class Card {
         return cardBrand;
     }
 
-    public Integer getCvv() {
-        return cvv;
+    public String getCvvHash() {
+        return cvvHash;
     }
 
     public CardType getCardType() {
@@ -124,59 +136,13 @@ public class Card {
         return transactions;
     }
 
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
     public User getUser() {
         return user;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
 
-    public void setBinNumber(String binNumber) {
-        this.binNumber = binNumber;
-    }
-
-    public void setLastFour(String lastFour) {
-        this.lastFour = lastFour;
-    }
-
-    public void setMaskedPan(String maskedPan) {
-        this.maskedPan = maskedPan;
-    }
-
-    public void setPanHash(String panHash) {
-        this.panHash = panHash;
-    }
-
-    public void setExpirationMonth(Integer expirationMonth) {
-        this.expirationMonth = expirationMonth;
-    }
-
-    public void setExpirationYear(Integer expirationYear) {
-        this.expirationYear = expirationYear;
-    }
-
-    public void setCardBrand(CardBrand cardBrand) {
-        this.cardBrand = cardBrand;
-    }
-
-    public void setCvv(Integer cvv) {
-        this.cvv = cvv;
-    }
-
-    public void setCardType(CardType cardType) {
-        this.cardType = cardType;
-    }
-
-    public void setCardStatus(CardStatus cardStatus) {
-        this.cardStatus = cardStatus;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public void setTransactions(Set<Transaction> transactions) {
-        this.transactions = transactions;
-    }
 }

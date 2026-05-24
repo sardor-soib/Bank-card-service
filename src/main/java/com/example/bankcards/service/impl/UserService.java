@@ -1,10 +1,11 @@
-package com.example.bankcards.service;
+package com.example.bankcards.service.impl;
 
 import com.example.bankcards.dto.UserDTO;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.exception.ServiceException;
 import com.example.bankcards.repository.UserRepository;
+import com.example.bankcards.service.UserManager;
 import com.example.bankcards.util.Role;
 import com.example.bankcards.util.UserMapper;
 import jakarta.validation.constraints.NotNull;

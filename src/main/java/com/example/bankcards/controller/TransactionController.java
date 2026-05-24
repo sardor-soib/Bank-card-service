@@ -2,7 +2,7 @@ package com.example.bankcards.controller;
 
 import com.example.bankcards.dto.TransactionDTO;
 import com.example.bankcards.service.TransactionManager;
-import com.example.bankcards.service.TransactionService;
+import com.example.bankcards.service.impl.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;

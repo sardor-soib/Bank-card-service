@@ -1,11 +1,14 @@
 package com.example.bankcards.dto;
 
+import java.math.BigDecimal;
+
 public record TransactionDTO(
         Long id,
         String type,
-        Double amount,
+        BigDecimal amount,
         String date,
-        Long cardId
+        Long cardId,
+        Long userId
 ) {
 
     public static TransactionDTO.Builder builder() {
@@ -15,9 +18,10 @@ public record TransactionDTO(
     public static class Builder {
         private Long id;
         private String type;
-        private Double amount;
+        private BigDecimal amount;
         private String date;
         private Long cardId;
+        private Long userId;
 
         public Builder id(Long id) {
             this.id = id;
@@ -29,7 +33,7 @@ public record TransactionDTO(
             return this;
         }
 
-        public Builder amount(Double amount) {
+        public Builder amount(BigDecimal amount) {
             this.amount = amount;
             return this;
         }
@@ -44,8 +48,13 @@ public record TransactionDTO(
             return this;
         }
 
+        public Builder userId(Long userId) {
+            this.userId = userId;
+            return this;
+        }
+
         public TransactionDTO build() {
-            return new TransactionDTO(id, type, amount, date, cardId);
+            return new TransactionDTO(id, type, amount, date, cardId, userId);
         }
     }
 }
