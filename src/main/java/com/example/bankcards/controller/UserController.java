@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 @Tag(name = "User Controller", description = "User Management Controller")
 @RequestMapping("/api/v1/users")
+@PreAuthorize("hasRole('ADMIN')")
 public class UserController {
 
     private final UserManager userManager;
@@ -41,6 +43,24 @@ public class UserController {
     @GetMapping
     public Page<UserDTO> searchUsers(@RequestParam(name = "query") String query, Pageable pageable) {
         return userManager.findByKeyFieldsContaining(query, pageable);
+    }
+
+    @Operation(summary = "Find all users by role", description = "Retrieves a list of users by their role")
+    @GetMapping("/role/{role}")
+    public Page<UserDTO> findAllUsersByRole(@PathVariable String role, Pageable pageable) {
+        return userManager.findAllByRole(role, pageable);
+    }
+
+    @Operation(summary = "Activate user", description = "Activates a user by their unique identifier")
+    @PatchMapping("/{id}")
+    public void activateUser(@PathVariable Long id) {
+        userManager.activateUser(id);
+    }
+
+    @Operation(summary = "Deactivate user", description = "Deactivates a user by their unique identifier")
+    @PatchMapping("/{id}")
+    public void deactivateUser(@PathVariable Long id) {
+        userManager.deactivateUser(id);
     }
 
     @Operation(summary = "Create a new user", description = "Creates a new user with the provided details")

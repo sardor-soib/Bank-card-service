@@ -13,4 +13,6 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     Page<Card> findByUserId(@NotNull Long userId, Pageable pageable);
 
     Page<Card> findByLastFour(@NotNull String lastFour, Pageable pageable);
+
+    Page<Card> findByUserIdAndLastFour(@NotNull Long userId, @NotNull String lastFour, Pageable pageable);
 }

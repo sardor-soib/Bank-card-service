@@ -1,6 +1,7 @@
 package com.example.bankcards.service;
 
 import com.example.bankcards.dto.TransactionDTO;
+import com.example.bankcards.entity.Card;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
@@ -12,7 +13,7 @@ public interface TransactionManager {
 
     boolean isExists(@NotNull Long id);
 
-    void transferBetweenUserCards(@NotNull Long userId, @NotNull Long sourceCardId, @NotNull Long targetCardId, @NotNull @Valid BigDecimal amount);
+    void formTransactions(@NotNull Card sourceCard, @NotNull Card targetCard, @NotNull @Valid BigDecimal amount);
 
     TransactionDTO create(@NotNull TransactionDTO transactionDTO);
 

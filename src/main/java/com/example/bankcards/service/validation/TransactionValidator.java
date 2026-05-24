@@ -2,6 +2,8 @@ package com.example.bankcards.service.validation;
 
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.util.CardStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -9,16 +11,20 @@ import java.math.BigDecimal;
 @Component
 public class TransactionValidator {
 
+    private static final Logger logger = LoggerFactory.getLogger(TransactionValidator.class);
+
     private TransactionValidator() {
         throw new UnsupportedOperationException("Utility class");
     }
 
     public static void validateTransferBetweenUserCards(Long userId, Card sourceCard, Card targetCard, BigDecimal amount) {
 
+        logger.info("Validating transfer between user cards for userId {}, sourceCard {}, targetCard {}, amount {}", userId, sourceCard, targetCard, amount);
         validateCards(sourceCard, targetCard);
         validateCardOwnership(userId, sourceCard, targetCard);
         validateAmount(amount);
         validateBalance(sourceCard, amount);
+        logger.info("Transfer validation completed successfully");
     }
 
     private static void validateCards(Card sourceCard, Card targetCard) {

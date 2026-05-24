@@ -1,6 +1,7 @@
 package com.example.bankcards.service;
 
 import com.example.bankcards.dto.CardDTO;
+import com.example.bankcards.dto.CreateCardDTO;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,9 +12,17 @@ public interface CardManager {
 
     boolean isExists(@NotNull Long id);
 
-    void transferBalance(Long userId, Long sourceCardId, Long targetCardId, BigDecimal amount);
+    void transferBalance(@NotNull Long userId, @NotNull Long sourceCardId, @NotNull Long targetCardId, @NotNull BigDecimal amount);
 
-    CardDTO create(@NotNull CardDTO cardDto);
+    void activateCard(@NotNull Long cardId);
+
+    void deactivateCard(@NotNull Long cardId);
+
+    void requestCardBlock(@NotNull Long cardId, @NotNull Long userId);
+
+    BigDecimal getBalance(@NotNull Long userId, @NotNull Long cardId);
+
+    CardDTO create(@NotNull CreateCardDTO createCardDTO);
 
     CardDTO findById(@NotNull Long id);
 
@@ -21,10 +30,11 @@ public interface CardManager {
 
     Page<CardDTO> search(@NotNull String query, Pageable pageable);
 
+    Page<CardDTO> search(@NotNull Long userId, @NotNull String query, Pageable pageable);
+
     Page<CardDTO> findAll(Pageable pageable);
 
     CardDTO update(@NotNull Long id, @NotNull CardDTO cardDto);
 
     void remove(@NotNull Long id);
-
 }

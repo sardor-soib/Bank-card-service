@@ -4,13 +4,13 @@ databaseChangeLog:
       author: developer
       changes:
         - sql:
-            sql: CREATE SCHEMA IF NOT EXISTS "bank-rest-service"
+            sql: CREATE SCHEMA IF NOT EXISTS "bank_rest_service"
   - changeSet:
       id: 1
       author: developer
       changes:
         - createTable:
-            schemaName: bank-rest-service
+            schemaName: bank_rest_service
             tableName: users
             columns:
               - column:
@@ -49,7 +49,7 @@ databaseChangeLog:
                   type: VARCHAR(50)
 
         - createTable:
-            schemaName: bank-rest-service
+            schemaName: bank_rest_service
             tableName: cards
             columns:
               - column:
@@ -79,24 +79,20 @@ databaseChangeLog:
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
+                    unique: true
               - column:
-                  name: expiration_month
-                  type: INT
+                  name: expiration_date
+                  type: DATE
                   constraints:
                     nullable: false
               - column:
-                  name: expiration_year
-                  type: INT
+                  name: balance
+                  type: DECIMAL(19, 2)
                   constraints:
                     nullable: false
               - column:
                   name: card_brand
                   type: VARCHAR(50)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: cvv
-                  type: INT
                   constraints:
                     nullable: false
               - column:
@@ -116,10 +112,10 @@ databaseChangeLog:
                     foreignKeyName: fk_cards_owner
                     referencedTableName: users
                     referencedColumnNames: user_id
-                    referencedTableSchemaName: bank-rest-service
+                    referencedTableSchemaName: bank_rest_service
 
         - createTable:
-            schemaName: bank-rest-service
+            schemaName: bank_rest_service
             tableName: transactions
             columns:
               - column:
@@ -137,7 +133,7 @@ databaseChangeLog:
                     foreignKeyName: fk_transactions_card
                     referencedTableName: cards
                     referencedColumnNames: card_id
-                    referencedTableSchemaName: bank-rest-service
+                    referencedTableSchemaName: bank_rest_service
               - column:
                   name: user_id
                   type: BIGINT
@@ -145,7 +141,7 @@ databaseChangeLog:
                     foreignKeyName: fk_transactions_user
                     referencedTableName: users
                     referencedColumnNames: user_id
-                    referencedTableSchemaName: bank-rest-service
+                    referencedTableSchemaName: bank_rest_service
               - column:
                   name: amount
                   type: DECIMAL(19, 2)

@@ -3,7 +3,7 @@ package com.example.bankcards.util;
 public enum Role {
 
     ADMIN("Admin"),
-    CUSTOMER("Customer");
+    USER("User");
 
     private final String displayName;
 

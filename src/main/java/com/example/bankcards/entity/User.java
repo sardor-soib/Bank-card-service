@@ -45,7 +45,25 @@ public class User {
     @Column(name = "transactions")
     private Set<Transaction> transactions;
 
+    public User(String fullName, String email, String phoneNumber, String password, Role role, UserStatus status) {
+        this.fullName = fullName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.password = password;
+        this.role = role;
+        this.status = status;
+    }
+
     public User() {
+
+    }
+
+    public void activateUser() {
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void deactivateUser() {
+        this.status = UserStatus.INACTIVE;
     }
 
     public Long getId() {

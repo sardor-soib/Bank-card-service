@@ -4,5 +4,6 @@ public enum CardStatus {
     ACTIVE,
     BLOCKED,
     FROZEN,
+    BLOCK_REQUESTED,
     EXPIRED
 }

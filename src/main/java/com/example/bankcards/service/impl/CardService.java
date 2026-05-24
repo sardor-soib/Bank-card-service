@@ -1,24 +1,27 @@
 package com.example.bankcards.service.impl;
 
 import com.example.bankcards.dto.CardDTO;
+import com.example.bankcards.dto.CreateCardDTO;
 import com.example.bankcards.entity.Card;
-import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.CardRepository;
+import com.example.bankcards.security.PanHashEncoder;
 import com.example.bankcards.service.CardManager;
+import com.example.bankcards.service.TransactionManager;
 import com.example.bankcards.service.validation.TransactionValidator;
+import com.example.bankcards.service.validation.UserValidator;
 import com.example.bankcards.util.CardMapper;
-import jakarta.validation.constraints.NotNull;
+import com.example.bankcards.util.PanMasker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 @Service
 @Validated
@@ -29,15 +32,19 @@ public class CardService implements CardManager {
 
     private final CardRepository cardRepository;
     private final CardMapper cardMapper;
+    private final PanHashEncoder panHashEncoder;
+    private final TransactionManager transactionManager;
 
     @Autowired
-    public CardService(CardRepository cardRepository, CardMapper cardMapper) {
+    public CardService(CardRepository cardRepository, CardMapper cardMapper, PanHashEncoder panHashEncoder, TransactionManager transactionManager) {
         this.cardRepository = cardRepository;
         this.cardMapper = cardMapper;
+        this.panHashEncoder = panHashEncoder;
+        this.transactionManager = transactionManager;
     }
 
     @Override
-    public boolean isExists(@NotNull Long id) {
+    public boolean isExists(Long id) {
         logger.info("Checking if card exists with ID {}", id);
         return cardRepository.existsById(id);
     }
@@ -47,52 +54,95 @@ public class CardService implements CardManager {
 
         logger.info("Transfer between user cards for userId {}, sourceCardId {}, targetCardId {}, amount {}", userId, sourceCardId, targetCardId, amount);
 
-        Optional<Card> sourceCard = cardRepository.findById(sourceCardId);
-        Optional<Card> targetCard = cardRepository.findById(targetCardId);
+        Card sourceCard = getCardEntityById(sourceCardId);
+        Card targetCard = getCardEntityById(targetCardId);
 
-        if (sourceCard.isEmpty() || targetCard.isEmpty()) {
-            logger.error("One of cards is not exists");
-            throw new ResourceNotFoundException("One of cards is not exists");
-        }
-
-        logger.info("Checking if cards are valid for transfer");
-        TransactionValidator.validateTransferBetweenUserCards(userId, sourceCard.get(), targetCard.get(), amount);
-        logger.info("Cards are valid for transfer");
+        TransactionValidator.validateTransferBetweenUserCards(userId, sourceCard, targetCard, amount);
 
         logger.info("Performing transfer between cards");
-        sourceCard.get().debit(amount);
-        targetCard.get().credit(amount);
-        cardRepository.save(sourceCard.get());
-        cardRepository.save(targetCard.get());
+        sourceCard.debit(amount);
+        targetCard.credit(amount);
+        cardRepository.save(sourceCard);
+        cardRepository.save(targetCard);
         logger.info("Transfer completed successfully");
+        transactionManager.formTransactions(sourceCard, targetCard, amount);
     }
 
     @Override
-    public CardDTO create(CardDTO cardDto) {
-        logger.info("Creating card for cardDTO {}", cardDto);
-        Card card = cardMapper.toCard(cardDto);
+    public BigDecimal getBalance(Long userId, Long cardId) {
+        logger.info("Getting balance for user with id {} and card with id {}", userId, cardId);
+        Card card = getCardEntityById(cardId);
+        UserValidator.validateOwner(userId, card);
+        return card.getBalance();
+    }
+
+    @Override
+    public void activateCard(Long id) {
+        logger.info("Activating card with id {}", id);
+        Card card = getCardEntityById(id);
+        card.unblockCard();
+        cardRepository.save(card);
+    }
+
+    @Override
+    public void deactivateCard(Long id) {
+        logger.info("Deactivating card with id {}", id);
+        Card card = getCardEntityById(id);
+        card.blockCard();
+        cardRepository.save(card);
+    }
+
+    @Override
+    public void requestCardBlock(Long cardId, Long userId) {
+        logger.info("Requesting card block for card with id {} by user with id {}", cardId, userId);
+        Card card = getCardEntityById(cardId);
+        UserValidator.validateOwner(userId, card);
+        card.requestBlock();
+        cardRepository.save(card);
+    }
+
+    @Override
+    public CardDTO create(CreateCardDTO createCardDTO) {
+        logger.info("Creating card for cardDTO {}", createCardDTO);
+
+        String rawPan = createCardDTO.pan();
+
+        Card card = cardMapper.toCard(createCardDTO);
+
+        card.applyPanData(
+                PanMasker.bin(rawPan),
+                PanMasker.lastFour(rawPan),
+                PanMasker.mask(rawPan),
+                panHashEncoder.encode(rawPan)
+        );
+
         return cardMapper.toCardDTO(cardRepository.save(card));
     }
 
     @Override
-    public CardDTO findById(@NotNull Long id) {
+    public CardDTO findById(Long id) {
         logger.info("Finding card by ID {}", id);
-        Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Card with ID %d not found".formatted(id)));
-        return cardMapper.toCardDTO(card);
+        return cardMapper.toCardDTO(getCardEntityById(id));
     }
 
     @Override
-    public Page<CardDTO> findByUserId(@NotNull Long userId, Pageable pageable) {
+    public Page<CardDTO> findByUserId(Long userId, Pageable pageable) {
         logger.info("Finding cards by user ID {}", userId);
         Page<Card> cards = cardRepository.findByUserId(userId, pageable);
         return cardMapper.toCardDTOPage(cards);
     }
 
     @Override
-    public Page<CardDTO> search(@NotNull String query, Pageable pageable) {
+    public Page<CardDTO> search(String query, Pageable pageable) {
         logger.info("Searching cards for query {}", query);
         Page<Card> cards = cardRepository.findByLastFour(query, pageable);
+        return cardMapper.toCardDTOPage(cards);
+    }
+
+    @Override
+    public Page<CardDTO> search(Long userId, String query, Pageable pageable) {
+        logger.info("Searching cards for userId {} and query {}", userId, query);
+        Page<Card> cards = cardRepository.findByUserIdAndLastFour(userId, query, pageable);
         return cardMapper.toCardDTOPage(cards);
     }
 
@@ -106,10 +156,7 @@ public class CardService implements CardManager {
     @Override
     public CardDTO update(Long id, CardDTO cardDto) {
         logger.info("Updating card with ID {}", id);
-        if (!isExists(id)) {
-            logger.info("Card with ID {} is not exists", id);
-            throw new ResourceNotFoundException("Card with ID %d not found".formatted(id));
-        }
+        requireCardExists(id);
         Card card = cardMapper.toCard(cardDto);
         return cardMapper.toCardDTO(cardRepository.save(card));
     }
@@ -117,10 +164,18 @@ public class CardService implements CardManager {
     @Override
     public void remove(Long id) {
         logger.info("Removing card with ID {}", id);
-        if (!isExists(id)) {
-            logger.info("Card with ID {} is not exists", id);
-            throw new ResourceNotFoundException("Card with ID %d not found".formatted(id));
-        }
+        requireCardExists(id);
         cardRepository.deleteById(id);
+    }
+
+    private void requireCardExists(Long id) {
+        if (!cardRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Card not found with id: " + id);
+        }
+    }
+
+    private Card getCardEntityById(Long cardId) {
+        return cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + cardId));
     }
 }

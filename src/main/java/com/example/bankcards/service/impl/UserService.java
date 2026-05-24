@@ -2,18 +2,16 @@ package com.example.bankcards.service.impl;
 
 import com.example.bankcards.dto.UserDTO;
 import com.example.bankcards.entity.User;
-import com.example.bankcards.exception.ResourceNotFoundException;
-import com.example.bankcards.exception.ServiceException;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.service.UserManager;
 import com.example.bankcards.util.Role;
 import com.example.bankcards.util.UserMapper;
-import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -37,24 +35,22 @@ public class UserService implements UserManager {
     }
 
     @Override
-    public boolean isExists(@NotNull Long id) {
+    public boolean isExists(Long id) {
         logger.info("Checking if user exists with {}", id);
         return userRepository.existsById(id);
     }
 
     @Override
-    public UserDTO create(@NotNull UserDTO dto) {
+    public UserDTO create(UserDTO dto) {
         logger.info("Creating user {}", dto);
         User user = userMapper.toEntity(dto);
         return userMapper.toDTO(userRepository.save(user));
     }
 
     @Override
-    public UserDTO findById(@NotNull Long id) {
+    public UserDTO findById(Long id) {
         logger.info("Finding user by id {}", id);
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User with ID %d not found".formatted(id)));
-        return userMapper.toDTO(user);
+        return userMapper.toDTO(getUserEntityById(id));
     }
 
     @Override
@@ -65,42 +61,66 @@ public class UserService implements UserManager {
     }
 
     @Override
-    public Page<UserDTO> findAllByRole(@NotNull String role, Pageable pageable) {
+    public Page<UserDTO> findAllByRole(String role, Pageable pageable) {
         logger.info("Fetching all users from repository for role {}", role);
         Page<User> users = userRepository.findAllByRole(Role.valueOf(role), pageable);
         return userMapper.toDTOPage(users);
     }
 
     @Override
-    public UserDTO update(@NotNull Long id, @NotNull UserDTO dto) {
-        logger.info("Updating user with id {}", id);
-        if (!isExists(id)) {
-            logger.info("User with id {} is not exists", id);
-            throw new ResourceNotFoundException(String.format("User not found with id: %d", id));
-        }
-        User user = userMapper.toEntity(dto);
-        return userMapper.toDTO(userRepository.save(user));
-    }
-
-    @Override
-    public void remove(@NotNull Long id) {
-        logger.info("Removing user with id {}", id);
-        if (!isExists(id)) {
-            throw new ResourceNotFoundException(String.format("User not found with id: %d", id));
-        }
-        userRepository.deleteById((id));
-    }
-
-    @Override
-    public Page<UserDTO> findByKeyFieldsContaining(@NotNull String query, Pageable pageable) throws ServiceException {
+    public Page<UserDTO> findByKeyFieldsContaining(String query, Pageable pageable) throws ResourceNotFoundException {
         try {
             logger.info("Finding users by key fields containing: {}", query);
             Page<User> users = userRepository.findByKeyFieldsContainingIgnoreCase(query, pageable);
             return userMapper.toDTOPage(users);
         } catch (SQLException e) {
-            throw new ServiceException("Error finding users by key fields containing: " + query, e);
+            throw new ResourceNotFoundException("Error finding users by key fields containing: " + query, e);
         }
 
+    }
+
+    @Override
+    public UserDTO update(Long id, UserDTO dto) {
+        logger.info("Updating user with id {}", id);
+        requireUserExists(id);
+        User user = userMapper.toEntity(dto);
+        return userMapper.toDTO(userRepository.save(user));
+    }
+
+    @Override
+    public void remove(Long id) {
+        logger.info("Removing user with id {}", id);
+        requireUserExists(id);
+        userRepository.deleteById((id));
+    }
+
+    @Override
+    public void activateUser(Long id) {
+        logger.info("Activating user with id {}", id);
+
+        User user = getUserEntityById(id);
+        user.activateUser();
+        userRepository.save(user);
+    }
+
+    @Override
+    public void deactivateUser(Long id) {
+        logger.info("Deactivating user with id {}", id);
+
+        User user = getUserEntityById(id);
+        user.deactivateUser();
+        userRepository.save(user);
+    }
+
+    private void requireUserExists(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("User not found with id: " + id);
+        }
+    }
+
+    private User getUserEntityById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + id));
     }
 }
 

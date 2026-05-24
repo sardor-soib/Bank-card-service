@@ -4,10 +4,9 @@ import java.math.BigDecimal;
 
 public record CardDTO(
         Long id,
-        String cardNumber,
+        String maskedPan,
         String cardHolderName,
         String expirationDate,
-        String cvvHash,
         BigDecimal balance,
         String cardStatus,
         Long userId
@@ -19,10 +18,9 @@ public record CardDTO(
 
     public static class Builder {
         private Long id;
-        private String cardNumber;
+        private String maskedPan;
         private String cardHolderName;
         private String expirationDate;
-        private String cvvHash;
         private BigDecimal balance;
         private String cardStatus;
         private Long userId;
@@ -32,8 +30,8 @@ public record CardDTO(
             return this;
         }
 
-        public CardDTO.Builder cardNumber(String cardNumber) {
-            this.cardNumber = cardNumber;
+        public CardDTO.Builder maskedPan(String maskedPan) {
+            this.maskedPan = maskedPan;
             return this;
         }
 
@@ -44,11 +42,6 @@ public record CardDTO(
 
         public CardDTO.Builder expirationDate(String expirationDate) {
             this.expirationDate = expirationDate;
-            return this;
-        }
-
-        public CardDTO.Builder cvvHash(String cvvHash) {
-            this.cvvHash = cvvHash;
             return this;
         }
 
@@ -68,7 +61,7 @@ public record CardDTO(
         }
 
         public CardDTO build() {
-            return new CardDTO(id, cardNumber, cardHolderName, expirationDate, cvvHash, balance, cardStatus, userId);
+            return new CardDTO(id, maskedPan, cardHolderName, expirationDate, balance, cardStatus, userId);
         }
     }
 }

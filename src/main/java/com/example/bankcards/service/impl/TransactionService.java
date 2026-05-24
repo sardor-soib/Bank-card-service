@@ -3,10 +3,7 @@ package com.example.bankcards.service.impl;
 import com.example.bankcards.dto.TransactionDTO;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.Transaction;
-import com.example.bankcards.exception.ResourceNotFoundException;
-import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.TransactionRepository;
-import com.example.bankcards.service.CardManager;
 import com.example.bankcards.service.TransactionManager;
 import com.example.bankcards.util.Currency;
 import com.example.bankcards.util.TransactionMapper;
@@ -17,12 +14,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 @Service
 @Validated
@@ -33,16 +30,12 @@ public class TransactionService implements TransactionManager {
 
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
-    private final CardManager cardManager;
-    private final CardRepository cardRepository;
 
 
     @Autowired
-    public TransactionService(TransactionRepository transactionRepository, TransactionMapper transactionMapper, CardManager cardManager, CardRepository cardRepository) {
+    public TransactionService(TransactionRepository transactionRepository, TransactionMapper transactionMapper) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
-        this.cardManager = cardManager;
-        this.cardRepository = cardRepository;
     }
 
     @Override
@@ -52,23 +45,13 @@ public class TransactionService implements TransactionManager {
     }
 
     @Override
-    public void transferBetweenUserCards(Long userId, Long sourceCardId, Long targetCardId, BigDecimal amount) {
+    public void formTransactions(Card sourceCard, Card targetCard, BigDecimal amount) {
 
-        logger.info("Transfer between user cards for userId {}, sourceCardId {}, targetCardId {}, amount {}", userId, sourceCardId, targetCardId, amount);
-
-        Optional<Card> sourceCard = cardRepository.findById(sourceCardId);
-        Optional<Card> targetCard = cardRepository.findById(targetCardId);
-
-        if (sourceCard.isEmpty() || targetCard.isEmpty()) {
-            logger.error("One of cards is not exists");
-            throw new ResourceNotFoundException("One of cards is not exists");
-        }
-
-        cardManager.transferBalance(userId, sourceCardId, targetCardId, amount);
+        logger.info("Forming transactions for sourceCard {}, targetCard {}, amount {}", sourceCard, targetCard, amount);
 
         Transaction debitTransaction = Transaction.createTransaction(
-                sourceCard.get(),
-                sourceCard.get().getUser(),
+                sourceCard,
+                sourceCard.getUser(),
                 amount,
                 Currency.USD,
                 TransactionType.DEBIT,
@@ -76,8 +59,8 @@ public class TransactionService implements TransactionManager {
         );
 
         Transaction creditTransaction = Transaction.createTransaction(
-                targetCard.get(),
-                targetCard.get().getUser(),
+                targetCard,
+                targetCard.getUser(),
                 amount,
                 Currency.USD,
                 TransactionType.CREDIT,
@@ -123,10 +106,7 @@ public class TransactionService implements TransactionManager {
     @Override
     public TransactionDTO update(Long id, TransactionDTO transactionDTO) {
         logger.info("Updating transaction for transactionDTO {}", transactionDTO);
-        if (!isExists(id)) {
-            logger.error("Transaction with ID {} not exists", id);
-            throw new ResourceNotFoundException("Transaction with ID %d not found".formatted(id));
-        }
+        requireTransactionExists(id);
         Transaction transaction = transactionMapper.toTransaction(transactionDTO);
         return transactionMapper.toTransactionDTO(transactionRepository.save(transaction));
     }
@@ -134,10 +114,13 @@ public class TransactionService implements TransactionManager {
     @Override
     public void remove(Long id) {
         logger.info("Removing transaction with id {}", id);
-        if (!isExists(id)) {
-            logger.error("Transaction with ID {} not exists", id);
-            throw new ResourceNotFoundException("Transaction with ID %d not found".formatted(id));
-        }
+        requireTransactionExists(id);
         transactionRepository.deleteById(id);
+    }
+
+    private void requireTransactionExists(Long id) {
+        if (!transactionRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Transaction not found with id: " + id);
+        }
     }
 }
