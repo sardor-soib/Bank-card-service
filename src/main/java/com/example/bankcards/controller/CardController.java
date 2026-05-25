@@ -14,7 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-
 @RestController
 @Validated
 @Tag(name = "Card Controller", description = "Card Management Controller")
@@ -35,10 +34,28 @@ public class CardController {
         return cardManager.search(query, pageable);
     }
 
+    @Operation(summary = "Find all cards", description = "Retrieve all cards with pagination")
+    @GetMapping
+    public Page<CardDTO> findAllCards(Pageable pageable) {
+        return cardManager.findAll(pageable);
+    }
+
     @Operation(summary = "Get card by id", description = "Retrieve a card by its unique identifier")
     @GetMapping("/{id}")
     public CardDTO getCard(@PathVariable Long id) {
         return cardManager.findById(id);
+    }
+
+    @Operation(summary = "Block card", description = "Block a card by ID")
+    @PatchMapping("/{id}/block")
+    public void blockCard(@PathVariable Long id) {
+        cardManager.deactivateCard(id);
+    }
+
+    @Operation(summary = "Activate card", description = "Activate a card by ID")
+    @PatchMapping("/{id}/activate")
+    public void activateCard(@PathVariable Long id) {
+        cardManager.activateCard(id);
     }
 
     @Operation(summary = "Create a new card", description = "Add a new card to the database")

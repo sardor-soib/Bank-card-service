@@ -3,9 +3,9 @@ spring:
     name: bank-rest-service
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/bank-rest-service
-    username: postgres
-    password: 12345
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
       minimum-idle: 1
       maximum-pool-size: 5
@@ -46,9 +46,13 @@ server:
   port: 8080
 
 auth0:
-  domain: "dev-ruik4gzrk5x137ze.eu.auth0.com"
+  domain: ${AUTH0_DOMAIN}
   jwks-url: "https://${auth0.domain}/.well-known/jwks.json"
-  audience: "https://localhost:8080/"
+  audience: ${AUTH0_AUDIENCE}
+
+bank:
+  cards:
+    pan-hash-secret: ${BANK_CARDS_PAN_HASH_SECRET}
 
 springdoc:
   package-to-scan: com.example.bankcards.controller
