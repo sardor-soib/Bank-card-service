@@ -32,9 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -163,7 +161,7 @@ class CardServiceTest {
     void requestCardBlock_ownerMatches_marksRequestedAndSaves() {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
 
-        cardService.requestCardBlock(10L, 1L);
+        cardService.requestCardBlock(1L, 10L);
 
         verify(sourceCard).requestBlock();
         verify(cardRepository).save(sourceCard);
@@ -173,7 +171,9 @@ class CardServiceTest {
     void requestCardBlock_nonOwner_throwsAndSkipsSave() {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
 
-        assertThatThrownBy(() -> cardService.requestCardBlock(10L, 999L))
+        Throwable throwable = catchThrowable(() -> cardService.requestCardBlock(999L, 10L));
+
+        assertThat(throwable).as("Expected IllegalArgumentException for non-owner")
                 .isInstanceOf(IllegalArgumentException.class);
 
         verify(sourceCard, never()).requestBlock();

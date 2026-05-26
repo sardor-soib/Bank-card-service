@@ -4,6 +4,7 @@ import com.example.bankcards.dto.UserDTO;
 import com.example.bankcards.service.UserManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -40,7 +41,7 @@ public class UserController {
     }
 
     @Operation(summary = "Search users", description = "Searches for users based on key fields and role")
-    @GetMapping
+    @GetMapping("/search")
     public Page<UserDTO> searchUsers(@RequestParam(name = "query") String query, Pageable pageable) {
         return userManager.findByKeyFieldsContaining(query, pageable);
     }
@@ -52,13 +53,13 @@ public class UserController {
     }
 
     @Operation(summary = "Activate user", description = "Activates a user by their unique identifier")
-    @PatchMapping("/{id}")
+    @PatchMapping("/{id}/activate")
     public void activateUser(@PathVariable Long id) {
         userManager.activateUser(id);
     }
 
     @Operation(summary = "Deactivate user", description = "Deactivates a user by their unique identifier")
-    @PatchMapping("/{id}")
+    @PatchMapping("/{id}/deactivate")
     public void deactivateUser(@PathVariable Long id) {
         userManager.deactivateUser(id);
     }
@@ -66,13 +67,13 @@ public class UserController {
     @Operation(summary = "Create a new user", description = "Creates a new user with the provided details")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDTO createUser(@NotNull @Validated UserDTO userDTO) {
+    public UserDTO createUser(@NotNull @Valid @RequestBody UserDTO userDTO) {
         return userManager.create(userDTO);
     }
 
     @Operation(summary = "Update a user", description = "Updates an existing user with the provided details")
-    @PutMapping
-    public UserDTO update(@NotNull Long id, @NotNull UserDTO userDTO) {
+    @PutMapping("/{id}")
+    public UserDTO update(@NotNull @PathVariable Long id, @NotNull @Valid @RequestBody UserDTO userDTO) {
         return userManager.update(id, userDTO);
     }
 

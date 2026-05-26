@@ -72,7 +72,7 @@ public class CardController {
         return cardManager.update(id, cardDto);
     }
 
-    @Operation(summary = "Delete a car", description = "Delete a car from the database by ID")
+    @Operation(summary = "Delete a car", description = "Delete a card from the database by ID")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCard(@PathVariable Long id) {

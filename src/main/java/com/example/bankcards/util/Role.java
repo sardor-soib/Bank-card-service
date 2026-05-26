@@ -2,8 +2,8 @@ package com.example.bankcards.util;
 
 public enum Role {
 
-    ADMIN("Admin"),
-    USER("User");
+    ADMIN("ADMIN"),
+    USER("USER");
 
     private final String displayName;
 

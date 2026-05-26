@@ -1,43 +1,44 @@
 package com.example.bankcards.config;
 
-import com.example.bankcards.security.Auth0Properties;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
-@EnableConfigurationProperties({Auth0Properties.class})
 public class JwtDecoderConfig {
     private static final Logger logger = LoggerFactory.getLogger(JwtDecoderConfig.class);
 
-    private final Auth0Properties auth0Properties;
-
-    public JwtDecoderConfig(Auth0Properties auth0Properties) {
-        this.auth0Properties = auth0Properties;
-    }
+    @Value("${auth.jwt.secret:default_secret_key_needs_to_be_at_least_32_bytes_long}")
+    private String jwtSecret;
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        String jwksUrl = auth0Properties.getJwksUrl();
-        if (jwksUrl == null || jwksUrl.isEmpty()) {
-            throw new IllegalStateException("auth0.jwks-url must be set in application.yml");
-        }
+        logger.info("Configuring symmetric JWT decoder");
+        SecretKeySpec secretKey = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HMACSHA256");
+        return NimbusJwtDecoder.withSecretKey(secretKey).build();
+    }
 
-        logger.info("Configuring JWT decoder with JWKS URL: {}", jwksUrl);
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUrl)
-                .restOperations(restTemplate)
-                .build();
-        decoder.setJwtValidator(JwtValidators.createDefault());
-        return decoder;
+    @Bean
+    public JwtEncoder jwtEncoder() {
+        logger.info("Configuring symmetric JWT encoder");
+        SecretKeySpec secretKey = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HMACSHA256");
+        JWK jwk = new OctetSequenceKey.Builder(secretKey).build();
+        JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
+        return new NimbusJwtEncoder(jwks);
     }
 }
-

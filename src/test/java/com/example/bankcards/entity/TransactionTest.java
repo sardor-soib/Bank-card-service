@@ -1,13 +1,6 @@
 package com.example.bankcards.entity;
 
-import com.example.bankcards.util.CardBrand;
-import com.example.bankcards.util.CardStatus;
-import com.example.bankcards.util.CardType;
-import com.example.bankcards.util.Currency;
-import com.example.bankcards.util.Role;
-import com.example.bankcards.util.TransactionStatus;
-import com.example.bankcards.util.TransactionType;
-import com.example.bankcards.util.UserStatus;
+import com.example.bankcards.util.*;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -18,6 +11,12 @@ import java.time.OffsetDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TransactionTest {
+
+    private static Object read(Transaction t, String fieldName) throws Exception {
+        Field f = Transaction.class.getDeclaredField(fieldName);
+        f.setAccessible(true);
+        return f.get(t);
+    }
 
     @Test
     void createTransaction_populatesAllFieldsAndTimestamps() throws Exception {
@@ -42,11 +41,5 @@ class TransactionTest {
         OffsetDateTime createdAt = (OffsetDateTime) read(t, "createdAt");
 
         assertThat(transactionTime).isEqualTo(createdAt).isBetween(before, after);
-    }
-
-    private static Object read(Transaction t, String fieldName) throws Exception {
-        Field f = Transaction.class.getDeclaredField(fieldName);
-        f.setAccessible(true);
-        return f.get(t);
     }
 }

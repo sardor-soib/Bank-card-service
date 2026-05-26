@@ -58,7 +58,8 @@ class RestExceptionHandlerTest {
 
     @Test
     void handleAuthentication_returns401() {
-        AuthenticationException ex = new AuthenticationException("auth failed") {};
+        AuthenticationException ex = new AuthenticationException("auth failed") {
+        };
 
         ResponseEntity<Object> response = handler.handleAuthentication(ex);
 

@@ -1,3 +1,4 @@
+---
 spring:
   application:
     name: bank-rest-service
@@ -25,8 +26,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "https://${auth0.domain}/"
-
+          issuer-uri: https://${auth0.domain}/
 logging:
   level:
     root: INFO
@@ -41,19 +41,18 @@ logging:
     name: application.log
     max-size: 10MB
     max-history: 5
-
 server:
   port: 8080
-
+auth:
+  jwt:
+    secret: ${JWT_SECRET:secret_key_needs_to_be_at_least_32_chars_long_minimum}
 auth0:
   domain: ${AUTH0_DOMAIN}
-  jwks-url: "https://${auth0.domain}/.well-known/jwks.json"
+  jwks-url: https://${auth0.domain}/.well-known/jwks.json
   audience: ${AUTH0_AUDIENCE}
-
 bank:
   cards:
     pan-hash-secret: ${BANK_CARDS_PAN_HASH_SECRET}
-
 springdoc:
   package-to-scan: com.example.bankcards.controller
   tagsSorting: alpha
@@ -61,3 +60,5 @@ springdoc:
     path: /api-docs.yaml
   swagger-ui:
     path: /swagger-ui.html
+
+kind: Application

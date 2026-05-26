@@ -1,5 +1,6 @@
 package com.example.bankcards.controller;
 
+import com.example.bankcards.config.CustomUserDetails;
 import com.example.bankcards.dto.TransactionDTO;
 import com.example.bankcards.service.impl.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,13 +9,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class TransactionControllerTest {
 
@@ -36,12 +37,18 @@ class TransactionControllerTest {
     }
 
     @Test
-    void findTransactionsForUser_delegatesToFindAll() {
+    void findTransactionsForUser_delegatesToFindByUserId() {
+        Authentication authentication = mock(Authentication.class);
+        CustomUserDetails userDetails = mock(CustomUserDetails.class);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(authentication.getAuthorities()).thenReturn(Collections.emptyList());
+        when(userDetails.getId()).thenReturn(1L);
+
         Pageable pageable = PageRequest.of(0, 10);
         Page<TransactionDTO> page = new PageImpl<>(List.of());
-        when(transactionService.findAll(pageable)).thenReturn(page);
+        when(transactionService.findByUserId(1L, pageable)).thenReturn(page);
 
-        assertThat(controller.findTransactionsForUser(1L, pageable)).isSameAs(page);
+        assertThat(controller.findTransactionsForUser(authentication, pageable)).isSameAs(page);
     }
 
     @Test

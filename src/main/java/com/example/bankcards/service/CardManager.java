@@ -18,7 +18,7 @@ public interface CardManager {
 
     void deactivateCard(@NotNull Long cardId);
 
-    void requestCardBlock(@NotNull Long cardId, @NotNull Long userId);
+    void requestCardBlock(@NotNull Long userId, @NotNull Long cardId);
 
     BigDecimal getBalance(@NotNull Long userId, @NotNull Long cardId);
 

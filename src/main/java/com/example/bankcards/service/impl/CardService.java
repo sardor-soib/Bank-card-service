@@ -93,7 +93,7 @@ public class CardService implements CardManager {
     }
 
     @Override
-    public void requestCardBlock(Long cardId, Long userId) {
+    public void requestCardBlock(Long userId, Long cardId) {
         logger.info("Requesting card block for card with id {} by user with id {}", cardId, userId);
         Card card = getCardEntityById(cardId);
         UserValidator.validateOwner(userId, card);

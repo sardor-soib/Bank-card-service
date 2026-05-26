@@ -1,10 +1,6 @@
 package com.example.bankcards.entity;
 
-import com.example.bankcards.util.CardBrand;
-import com.example.bankcards.util.CardStatus;
-import com.example.bankcards.util.CardType;
-import com.example.bankcards.util.Role;
-import com.example.bankcards.util.UserStatus;
+import com.example.bankcards.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
