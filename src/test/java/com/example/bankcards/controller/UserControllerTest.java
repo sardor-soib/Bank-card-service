@@ -1,7 +1,7 @@
 package com.example.bankcards.controller;
 
 import com.example.bankcards.dto.UserDTO;
-import com.example.bankcards.service.UserManager;
+import com.example.bankcards.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class UserControllerTest {
 
     @Mock
-    UserManager userManager;
+    UserService userService;
 
     @InjectMocks
     UserController userController;
@@ -30,7 +30,7 @@ class UserControllerTest {
     @Test
     void findUserById_delegates() {
         UserDTO dto = UserDTO.builder().id(1L).build();
-        when(userManager.findById(1L)).thenReturn(dto);
+        when(userService.findById(1L)).thenReturn(dto);
 
         assertThat(userController.findUserById(1L)).isSameAs(dto);
     }
@@ -39,7 +39,7 @@ class UserControllerTest {
     void findAllUsers_delegates() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<UserDTO> page = new PageImpl<>(List.of());
-        when(userManager.findAll(pageable)).thenReturn(page);
+        when(userService.findAll(pageable)).thenReturn(page);
 
         assertThat(userController.findAllUsers(pageable)).isSameAs(page);
     }
@@ -48,7 +48,7 @@ class UserControllerTest {
     void searchUsers_delegates() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<UserDTO> page = new PageImpl<>(List.of());
-        when(userManager.findByKeyFieldsContaining("jane", pageable)).thenReturn(page);
+        when(userService.findByKeyFieldsContaining("jane", pageable)).thenReturn(page);
 
         assertThat(userController.searchUsers("jane", pageable)).isSameAs(page);
     }
@@ -57,7 +57,7 @@ class UserControllerTest {
     void findAllUsersByRole_delegates() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<UserDTO> page = new PageImpl<>(List.of());
-        when(userManager.findAllByRole("ADMIN", pageable)).thenReturn(page);
+        when(userService.findAllByRole("ADMIN", pageable)).thenReturn(page);
 
         assertThat(userController.findAllUsersByRole("ADMIN", pageable)).isSameAs(page);
     }
@@ -66,21 +66,21 @@ class UserControllerTest {
     void activateUser_delegates() {
         userController.activateUser(1L);
 
-        verify(userManager).activateUser(1L);
+        verify(userService).activateUser(1L);
     }
 
     @Test
     void deactivateUser_delegates() {
         userController.deactivateUser(1L);
 
-        verify(userManager).deactivateUser(1L);
+        verify(userService).deactivateUser(1L);
     }
 
     @Test
     void createUser_delegates() {
-        UserDTO dto = UserDTO.builder().alias("jane").build();
-        UserDTO returned = UserDTO.builder().id(1L).alias("jane").build();
-        when(userManager.create(dto)).thenReturn(returned);
+        UserDTO dto = UserDTO.builder().fullName("jane").build();
+        UserDTO returned = UserDTO.builder().id(1L).fullName("jane").build();
+        when(userService.create(dto)).thenReturn(returned);
 
         assertThat(userController.createUser(dto)).isSameAs(returned);
     }
@@ -89,7 +89,7 @@ class UserControllerTest {
     void update_delegates() {
         UserDTO dto = UserDTO.builder().id(1L).build();
         UserDTO returned = UserDTO.builder().id(1L).build();
-        when(userManager.update(1L, dto)).thenReturn(returned);
+        when(userService.update(1L, dto)).thenReturn(returned);
 
         assertThat(userController.update(1L, dto)).isSameAs(returned);
     }
@@ -98,6 +98,6 @@ class UserControllerTest {
     void remove_delegates() {
         userController.remove(1L);
 
-        verify(userManager).remove(1L);
+        verify(userService).remove(1L);
     }
 }

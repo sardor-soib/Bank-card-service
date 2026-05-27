@@ -37,12 +37,10 @@ public class User {
 
     //Specific fields for Customer
 
-    @OneToMany
-    @Column(name = "cards")
+    @OneToMany(mappedBy = "user")
     private Set<Card> cards;
 
-    @OneToMany
-    @Column(name = "transactions")
+    @OneToMany(mappedBy = "user")
     private Set<Transaction> transactions;
 
     public User(String fullName, String email, String phoneNumber, String password, Role role, UserStatus status) {
@@ -74,6 +72,10 @@ public class User {
         return fullName;
     }
 
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -86,8 +88,16 @@ public class User {
         return password;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public Role getRole() {
         return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public UserStatus getStatus() {

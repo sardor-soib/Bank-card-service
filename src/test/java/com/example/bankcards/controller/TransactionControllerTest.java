@@ -2,7 +2,7 @@ package com.example.bankcards.controller;
 
 import com.example.bankcards.config.CustomUserDetails;
 import com.example.bankcards.dto.TransactionDTO;
-import com.example.bankcards.service.impl.TransactionService;
+import com.example.bankcards.service.impl.TransactionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -19,19 +19,19 @@ import static org.mockito.Mockito.*;
 
 class TransactionControllerTest {
 
-    private TransactionService transactionService;
+    private TransactionServiceImpl transactionServiceImpl;
     private TransactionController controller;
 
     @BeforeEach
     void setUp() {
-        transactionService = mock(TransactionService.class);
-        controller = new TransactionController(transactionService);
+        transactionServiceImpl = mock(TransactionServiceImpl.class);
+        controller = new TransactionController(transactionServiceImpl);
     }
 
     @Test
     void findTransactionById_delegates() {
         TransactionDTO dto = TransactionDTO.builder().id(1L).build();
-        when(transactionService.findById(1L)).thenReturn(dto);
+        when(transactionServiceImpl.findById(1L)).thenReturn(dto);
 
         assertThat(controller.findTransactionById(1L)).isSameAs(dto);
     }
@@ -46,7 +46,7 @@ class TransactionControllerTest {
 
         Pageable pageable = PageRequest.of(0, 10);
         Page<TransactionDTO> page = new PageImpl<>(List.of());
-        when(transactionService.findByUserId(1L, pageable)).thenReturn(page);
+        when(transactionServiceImpl.findByUserId(1L, pageable)).thenReturn(page);
 
         assertThat(controller.findTransactionsForUser(authentication, pageable)).isSameAs(page);
     }
@@ -55,7 +55,7 @@ class TransactionControllerTest {
     void findTransactionsForCard_delegates() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<TransactionDTO> page = new PageImpl<>(List.of());
-        when(transactionService.findByCardId(7L, pageable)).thenReturn(page);
+        when(transactionServiceImpl.findByCardId(7L, pageable)).thenReturn(page);
 
         assertThat(controller.findTransactionsForCard(7L, pageable)).isSameAs(page);
     }
@@ -64,7 +64,7 @@ class TransactionControllerTest {
     void createTransaction_delegates() {
         TransactionDTO dto = TransactionDTO.builder().build();
         TransactionDTO returned = TransactionDTO.builder().id(1L).build();
-        when(transactionService.create(dto)).thenReturn(returned);
+        when(transactionServiceImpl.create(dto)).thenReturn(returned);
 
         assertThat(controller.createTransaction(dto)).isSameAs(returned);
     }
@@ -73,7 +73,7 @@ class TransactionControllerTest {
     void updateTransaction_delegates() {
         TransactionDTO dto = TransactionDTO.builder().build();
         TransactionDTO returned = TransactionDTO.builder().id(1L).build();
-        when(transactionService.update(1L, dto)).thenReturn(returned);
+        when(transactionServiceImpl.update(1L, dto)).thenReturn(returned);
 
         assertThat(controller.updateTransaction(1L, dto)).isSameAs(returned);
     }
@@ -82,6 +82,6 @@ class TransactionControllerTest {
     void deleteTransaction_delegates() {
         controller.deleteTransaction(1L);
 
-        verify(transactionService).remove(1L);
+        verify(transactionServiceImpl).remove(1L);
     }
 }

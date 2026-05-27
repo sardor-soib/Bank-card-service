@@ -6,9 +6,9 @@ import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.security.PanHashEncoder;
-import com.example.bankcards.service.TransactionManager;
-import com.example.bankcards.util.CardMapper;
+import com.example.bankcards.service.TransactionService;
 import com.example.bankcards.util.CardStatus;
+import com.example.bankcards.util.mapper.CardMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class CardServiceTest {
+class CardServiceImplTest {
 
     @Mock
     CardRepository cardRepository;
@@ -45,10 +45,10 @@ class CardServiceTest {
     @Mock
     PanHashEncoder panHashEncoder;
     @Mock
-    TransactionManager transactionManager;
+    TransactionService transactionService;
 
     @InjectMocks
-    CardService cardService;
+    CardServiceImpl cardServiceImpl;
 
     private Card sourceCard;
     private Card targetCard;
@@ -76,7 +76,7 @@ class CardServiceTest {
     void isExists_delegatesToRepository() {
         when(cardRepository.existsById(5L)).thenReturn(true);
 
-        assertThat(cardService.isExists(5L)).isTrue();
+        assertThat(cardServiceImpl.isExists(5L)).isTrue();
     }
 
     @Test
@@ -84,13 +84,13 @@ class CardServiceTest {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
         when(cardRepository.findById(20L)).thenReturn(Optional.of(targetCard));
 
-        cardService.transferBalance(1L, 10L, 20L, new BigDecimal("25.00"));
+        cardServiceImpl.transferBalance(1L, 10L, 20L, new BigDecimal("25.00"));
 
         verify(sourceCard).debit(new BigDecimal("25.00"));
         verify(targetCard).credit(new BigDecimal("25.00"));
         verify(cardRepository).save(sourceCard);
         verify(cardRepository).save(targetCard);
-        verify(transactionManager).formTransactions(sourceCard, targetCard, new BigDecimal("25.00"));
+        verify(transactionService).formTransactions(sourceCard, targetCard, new BigDecimal("25.00"));
     }
 
     @Test
@@ -98,11 +98,11 @@ class CardServiceTest {
         when(cardRepository.findById(10L)).thenReturn(Optional.empty());
 
         Throwable thrown = catchThrowable(() ->
-                cardService.transferBalance(1L, 10L, 20L, new BigDecimal("1"))
+                cardServiceImpl.transferBalance(1L, 10L, 20L, new BigDecimal("1"))
         );
         assertThat(thrown).as("Expected ResourceNotFoundException for missing source card").isInstanceOf(ResourceNotFoundException.class);
 
-        verify(transactionManager, never()).formTransactions(any(), any(), any());
+        verify(transactionService, never()).formTransactions(any(), any(), any());
     }
 
     @Test
@@ -111,20 +111,20 @@ class CardServiceTest {
         when(cardRepository.findById(20L)).thenReturn(Optional.of(targetCard));
 
         Throwable thrown = catchThrowable(() ->
-                cardService.transferBalance(1L, 10L, 20L, new BigDecimal("1000")));
+                cardServiceImpl.transferBalance(1L, 10L, 20L, new BigDecimal("1000")));
 
         assertThat(thrown).as("Expected IllegalArgumentException for insufficient funds")
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Insufficient funds");
 
         verify(cardRepository, never()).save(any());
-        verify(transactionManager, never()).formTransactions(any(), any(), any());
+        verify(transactionService, never()).formTransactions(any(), any(), any());
     }
 
     @Test
     void getBalance_ownerMatches_returnsBalance() {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
 
-        BigDecimal balance = cardService.getBalance(1L, 10L);
+        BigDecimal balance = cardServiceImpl.getBalance(1L, 10L);
 
         assertThat(balance).isEqualByComparingTo("100.00");
     }
@@ -133,7 +133,7 @@ class CardServiceTest {
     void getBalance_nonOwner_throws() {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
 
-        assertThatThrownBy(() -> cardService.getBalance(999L, 10L))
+        assertThatThrownBy(() -> cardServiceImpl.getBalance(999L, 10L))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -141,7 +141,7 @@ class CardServiceTest {
     void activateCard_unblocksAndSaves() {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
 
-        cardService.activateCard(10L);
+        cardServiceImpl.activateCard(10L);
 
         verify(sourceCard).unblockCard();
         verify(cardRepository).save(sourceCard);
@@ -151,7 +151,7 @@ class CardServiceTest {
     void deactivateCard_blocksAndSaves() {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
 
-        cardService.deactivateCard(10L);
+        cardServiceImpl.deactivateCard(10L);
 
         verify(sourceCard).blockCard();
         verify(cardRepository).save(sourceCard);
@@ -161,7 +161,7 @@ class CardServiceTest {
     void requestCardBlock_ownerMatches_marksRequestedAndSaves() {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
 
-        cardService.requestCardBlock(1L, 10L);
+        cardServiceImpl.requestCardBlock(1L, 10L);
 
         verify(sourceCard).requestBlock();
         verify(cardRepository).save(sourceCard);
@@ -171,7 +171,7 @@ class CardServiceTest {
     void requestCardBlock_nonOwner_throwsAndSkipsSave() {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
 
-        Throwable throwable = catchThrowable(() -> cardService.requestCardBlock(999L, 10L));
+        Throwable throwable = catchThrowable(() -> cardServiceImpl.requestCardBlock(999L, 10L));
 
         assertThat(throwable).as("Expected IllegalArgumentException for non-owner")
                 .isInstanceOf(IllegalArgumentException.class);
@@ -193,7 +193,7 @@ class CardServiceTest {
         when(cardRepository.save(mappedCard)).thenReturn(savedCard);
         when(cardMapper.toCardDTO(savedCard)).thenReturn(returnedDto);
 
-        CardDTO result = cardService.create(dto);
+        CardDTO result = cardServiceImpl.create(dto);
 
         verify(mappedCard).applyPanData("411111", "1111", "**** **** **** 1111", "hash-value");
         assertThat(result).isSameAs(returnedDto);
@@ -205,14 +205,14 @@ class CardServiceTest {
         when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
         when(cardMapper.toCardDTO(sourceCard)).thenReturn(dto);
 
-        assertThat(cardService.findById(10L)).isSameAs(dto);
+        assertThat(cardServiceImpl.findById(10L)).isSameAs(dto);
     }
 
     @Test
     void findById_missing_throws() {
         when(cardRepository.findById(404L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> cardService.findById(404L))
+        assertThatThrownBy(() -> cardServiceImpl.findById(404L))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -225,7 +225,7 @@ class CardServiceTest {
         when(cardRepository.findByUserId(1L, pageable)).thenReturn(page);
         when(cardMapper.toCardDTOPage(page)).thenReturn(dtoPage);
 
-        assertThat(cardService.findByUserId(1L, pageable)).isSameAs(dtoPage);
+        assertThat(cardServiceImpl.findByUserId(1L, pageable)).isSameAs(dtoPage);
     }
 
     @Test
@@ -237,7 +237,7 @@ class CardServiceTest {
         when(cardRepository.findByLastFour("1111", pageable)).thenReturn(page);
         when(cardMapper.toCardDTOPage(page)).thenReturn(dtoPage);
 
-        assertThat(cardService.search("1111", pageable)).isSameAs(dtoPage);
+        assertThat(cardServiceImpl.search("1111", pageable)).isSameAs(dtoPage);
     }
 
     @Test
@@ -249,7 +249,7 @@ class CardServiceTest {
         when(cardRepository.findByUserIdAndLastFour(1L, "1111", pageable)).thenReturn(page);
         when(cardMapper.toCardDTOPage(page)).thenReturn(dtoPage);
 
-        assertThat(cardService.search(1L, "1111", pageable)).isSameAs(dtoPage);
+        assertThat(cardServiceImpl.search(1L, "1111", pageable)).isSameAs(dtoPage);
     }
 
     @Test
@@ -261,32 +261,44 @@ class CardServiceTest {
         when(cardRepository.findAll(pageable)).thenReturn(page);
         when(cardMapper.toCardDTOPage(page)).thenReturn(dtoPage);
 
-        assertThat(cardService.findAll(pageable)).isSameAs(dtoPage);
+        assertThat(cardServiceImpl.findAll(pageable)).isSameAs(dtoPage);
     }
 
     @Test
-    void update_existingCard_saves() {
-        CardDTO dto = CardDTO.builder().id(10L).build();
-        Card mapped = org.mockito.Mockito.mock(Card.class);
+    void update_existingCard_updatesStatusAndSaves() {
+        CardDTO dto = CardDTO.builder().id(10L).cardStatus("BLOCKED").build();
         Card saved = org.mockito.Mockito.mock(Card.class);
         CardDTO returned = CardDTO.builder().id(10L).build();
 
-        when(cardRepository.existsById(10L)).thenReturn(true);
-        when(cardMapper.toCard(dto)).thenReturn(mapped);
-        when(cardRepository.save(mapped)).thenReturn(saved);
+        when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
+        when(cardRepository.save(sourceCard)).thenReturn(saved);
         when(cardMapper.toCardDTO(saved)).thenReturn(returned);
 
-        assertThat(cardService.update(10L, dto)).isSameAs(returned);
+        assertThat(cardServiceImpl.update(10L, dto)).isSameAs(returned);
+        verify(sourceCard).blockCard();
+    }
+
+    @Test
+    void update_existingCard_updatesExpirationDateAndSaves() {
+        CardDTO dto = CardDTO.builder().id(10L).expirationDate("2030-12-31").build();
+        Card saved = org.mockito.Mockito.mock(Card.class);
+        CardDTO returned = CardDTO.builder().id(10L).build();
+
+        when(cardRepository.findById(10L)).thenReturn(Optional.of(sourceCard));
+        when(cardRepository.save(sourceCard)).thenReturn(saved);
+        when(cardMapper.toCardDTO(saved)).thenReturn(returned);
+
+        assertThat(cardServiceImpl.update(10L, dto)).isSameAs(returned);
+        verify(sourceCard).setExpirationDate(java.time.LocalDate.of(2030, 12, 31));
     }
 
     @Test
     void update_missingCard_throws() {
-        when(cardRepository.existsById(404L)).thenReturn(false);
+        when(cardRepository.findById(404L)).thenReturn(Optional.empty());
 
-        Throwable thrown = catchThrowable(() -> cardService.update(404L, CardDTO.builder().id(404L).build()));
+        Throwable thrown = catchThrowable(() -> cardServiceImpl.update(404L, CardDTO.builder().id(404L).build()));
 
         assertThat(thrown).as("Expected ResourceNotFoundException for missing card").isInstanceOf(ResourceNotFoundException.class);
-
         verify(cardRepository, never()).save(any());
     }
 
@@ -294,7 +306,7 @@ class CardServiceTest {
     void remove_existing_deletes() {
         when(cardRepository.existsById(10L)).thenReturn(true);
 
-        cardService.remove(10L);
+        cardServiceImpl.remove(10L);
 
         ArgumentCaptor<Long> idCaptor = ArgumentCaptor.forClass(Long.class);
         verify(cardRepository).deleteById(idCaptor.capture());
@@ -305,7 +317,7 @@ class CardServiceTest {
     void remove_missing_throws() {
         when(cardRepository.existsById(404L)).thenReturn(false);
 
-        assertThatThrownBy(() -> cardService.remove(404L))
+        assertThatThrownBy(() -> cardServiceImpl.remove(404L))
                 .isInstanceOf(ResourceNotFoundException.class);
 
         verify(cardRepository, never()).deleteById(404L);

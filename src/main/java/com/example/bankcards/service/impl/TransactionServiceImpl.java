@@ -4,11 +4,11 @@ import com.example.bankcards.dto.TransactionDTO;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.Transaction;
 import com.example.bankcards.repository.TransactionRepository;
-import com.example.bankcards.service.TransactionManager;
+import com.example.bankcards.service.TransactionService;
 import com.example.bankcards.util.Currency;
-import com.example.bankcards.util.TransactionMapper;
 import com.example.bankcards.util.TransactionStatus;
 import com.example.bankcards.util.TransactionType;
+import com.example.bankcards.util.mapper.TransactionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,16 +24,16 @@ import java.math.BigDecimal;
 @Service
 @Validated
 @Transactional
-public class TransactionService implements TransactionManager {
+public class TransactionServiceImpl implements TransactionService {
 
-    private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
+    private static final Logger logger = LoggerFactory.getLogger(TransactionServiceImpl.class);
 
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
 
 
     @Autowired
-    public TransactionService(TransactionRepository transactionRepository, TransactionMapper transactionMapper) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
     }

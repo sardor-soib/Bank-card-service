@@ -2,7 +2,7 @@ package com.example.bankcards.controller;
 
 import com.example.bankcards.config.CustomUserDetails;
 import com.example.bankcards.dto.CardDTO;
-import com.example.bankcards.service.CardManager;
+import com.example.bankcards.service.CardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 class UserCardControllerTest {
 
     @Mock
-    CardManager cardManager;
+    CardService cardService;
 
     @InjectMocks
     UserCardController controller;
@@ -47,7 +47,7 @@ class UserCardControllerTest {
     void getCardsForUser_delegates() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<CardDTO> page = new PageImpl<>(List.of(CardDTO.builder().id(1L).build()));
-        when(cardManager.findByUserId(1L, pageable)).thenReturn(page);
+        when(cardService.findByUserId(1L, pageable)).thenReturn(page);
 
         assertThat(controller.getCardsForUser(authentication, pageable)).isSameAs(page);
     }
@@ -56,7 +56,7 @@ class UserCardControllerTest {
     void searchCardsForUser_delegates() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<CardDTO> page = new PageImpl<>(List.of());
-        when(cardManager.search(1L, "1111", pageable)).thenReturn(page);
+        when(cardService.search(1L, "1111", pageable)).thenReturn(page);
 
         assertThat(controller.searchCardsForUser(authentication, "1111", pageable)).isSameAs(page);
     }
@@ -66,19 +66,19 @@ class UserCardControllerTest {
         BigDecimal amount = new BigDecimal("50.00");
         controller.transferBalance(authentication, 1L, 2L, amount);
 
-        verify(cardManager).transferBalance(1L, 1L, 2L, amount);
+        verify(cardService).transferBalance(1L, 1L, 2L, amount);
     }
 
     @Test
     void requestCardBlock_delegates() {
         controller.requestCardBlock(authentication, 5L);
 
-        verify(cardManager).requestCardBlock(1L, 5L);
+        verify(cardService).requestCardBlock(1L, 5L);
     }
 
     @Test
     void getBalance_delegates() {
-        when(cardManager.getBalance(1L, 5L)).thenReturn(new BigDecimal("100.00"));
+        when(cardService.getBalance(1L, 5L)).thenReturn(new BigDecimal("100.00"));
 
         assertThat(controller.getBalance(authentication, 5L)).isEqualByComparingTo("100.00");
     }

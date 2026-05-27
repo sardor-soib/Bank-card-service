@@ -30,5 +30,9 @@ public class SecurityUtils {
         if (auth == null || auth.getPrincipal() == null || auth.getAuthorities() == null) {
             throw new IllegalArgumentException("Authentication object cannot be null or have null principal or authorities");
         }
+
+        if (!(auth.getPrincipal() instanceof CustomUserDetails)) {
+            throw new IllegalArgumentException("Principal is not a CustomUserDetails instance");
+        }
     }
 }

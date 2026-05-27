@@ -5,12 +5,13 @@ import com.example.bankcards.dto.CreateCardDTO;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.security.PanHashEncoder;
-import com.example.bankcards.service.CardManager;
-import com.example.bankcards.service.TransactionManager;
+import com.example.bankcards.service.CardService;
+import com.example.bankcards.service.TransactionService;
 import com.example.bankcards.service.validation.TransactionValidator;
 import com.example.bankcards.service.validation.UserValidator;
-import com.example.bankcards.util.CardMapper;
+import com.example.bankcards.util.CardStatus;
 import com.example.bankcards.util.PanMasker;
+import com.example.bankcards.util.mapper.CardMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,25 +23,26 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Service
 @Validated
 @Transactional
-public class CardService implements CardManager {
+public class CardServiceImpl implements CardService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CardService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CardServiceImpl.class);
 
     private final CardRepository cardRepository;
     private final CardMapper cardMapper;
     private final PanHashEncoder panHashEncoder;
-    private final TransactionManager transactionManager;
+    private final TransactionService transactionService;
 
     @Autowired
-    public CardService(CardRepository cardRepository, CardMapper cardMapper, PanHashEncoder panHashEncoder, TransactionManager transactionManager) {
+    public CardServiceImpl(CardRepository cardRepository, CardMapper cardMapper, PanHashEncoder panHashEncoder, TransactionService transactionService) {
         this.cardRepository = cardRepository;
         this.cardMapper = cardMapper;
         this.panHashEncoder = panHashEncoder;
-        this.transactionManager = transactionManager;
+        this.transactionService = transactionService;
     }
 
     @Override
@@ -65,7 +67,7 @@ public class CardService implements CardManager {
         cardRepository.save(sourceCard);
         cardRepository.save(targetCard);
         logger.info("Transfer completed successfully");
-        transactionManager.formTransactions(sourceCard, targetCard, amount);
+        transactionService.formTransactions(sourceCard, targetCard, amount);
     }
 
     @Override
@@ -156,8 +158,19 @@ public class CardService implements CardManager {
     @Override
     public CardDTO update(Long id, CardDTO cardDto) {
         logger.info("Updating card with ID {}", id);
-        requireCardExists(id);
-        Card card = cardMapper.toCard(cardDto);
+        Card card = getCardEntityById(id);
+        if (cardDto.cardStatus() != null) {
+            CardStatus newStatus = CardStatus.valueOf(cardDto.cardStatus());
+            switch (newStatus) {
+                case BLOCKED -> card.blockCard();
+                case ACTIVE -> card.unblockCard();
+                case BLOCK_REQUESTED -> card.requestBlock();
+                default -> throw new IllegalArgumentException("Cannot directly set card status to: " + newStatus);
+            }
+        }
+        if (cardDto.expirationDate() != null) {
+            card.setExpirationDate(LocalDate.parse(cardDto.expirationDate()));
+        }
         return cardMapper.toCardDTO(cardRepository.save(card));
     }
 

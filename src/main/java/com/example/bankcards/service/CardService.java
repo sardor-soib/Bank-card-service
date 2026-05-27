@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 
-public interface CardManager {
+public interface CardService {
 
     boolean isExists(@NotNull Long id);
 

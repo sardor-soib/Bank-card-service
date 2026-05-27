@@ -2,7 +2,7 @@ package com.example.bankcards.dto;
 
 public record UserDTO(
         Long id,
-        String alias,
+        String fullName,
         String password,
         String role
 ) {
@@ -12,7 +12,7 @@ public record UserDTO(
 
     public static class Builder {
         private Long id;
-        private String alias;
+        private String fullName;
         private String password;
         private String role;
 
@@ -21,8 +21,8 @@ public record UserDTO(
             return this;
         }
 
-        public Builder alias(String alias) {
-            this.alias = alias;
+        public Builder fullName(String fullName) {
+            this.fullName = fullName;
             return this;
         }
 
@@ -37,7 +37,7 @@ public record UserDTO(
         }
 
         public UserDTO build() {
-            return new UserDTO(id, alias, password, role);
+            return new UserDTO(id, fullName, password, role);
         }
     }
 }

@@ -4,11 +4,9 @@ import com.example.bankcards.entity.Card;
 import com.example.bankcards.util.CardStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
-@Component
 public class TransactionValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactionValidator.class);
@@ -37,7 +35,9 @@ public class TransactionValidator {
     }
 
     private static void validateCardOwnership(Long userId, Card sourceCard, Card targetCard) {
-        if (!sourceCard.getUser().getId().equals(userId) || !targetCard.getUser().getId().equals(userId)) {
+        if (sourceCard.getUser() == null || targetCard.getUser() == null
+                || !sourceCard.getUser().getId().equals(userId)
+                || !targetCard.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Both cards must belong to the user");
         }
     }

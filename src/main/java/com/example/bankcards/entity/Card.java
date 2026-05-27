@@ -95,51 +95,87 @@ public class Card {
         this.cardStatus = CardStatus.BLOCK_REQUESTED;
     }
 
-    public Long getId() {
-        return id;
+    public User getUser() {
+        return user;
     }
 
-    public String getBinNumber() {
-        return binNumber;
-    }
-
-    public String getLastFour() {
-        return lastFour;
-    }
-
-    public String getMaskedPan() {
-        return maskedPan;
-    }
-
-    public String getPanHash() {
-        return panHash;
-    }
-
-    public LocalDate getExpirationDate() {
-        return expirationDate;
-    }
-
-    public CardBrand getCardBrand() {
-        return cardBrand;
-    }
-
-    public CardType getCardType() {
-        return cardType;
-    }
-
-    public CardStatus getCardStatus() {
-        return cardStatus;
-    }
-
-    public Set<Transaction> getTransactions() {
-        return transactions;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public BigDecimal getBalance() {
         return balance;
     }
 
-    public User getUser() {
-        return user;
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+
+    public CardType getCardType() {
+        return cardType;
+    }
+
+    public void setCardType(CardType cardType) {
+        this.cardType = cardType;
+    }
+
+    public CardBrand getCardBrand() {
+        return cardBrand;
+    }
+
+    public void setCardBrand(CardBrand cardBrand) {
+        this.cardBrand = cardBrand;
+    }
+
+    public CardStatus getCardStatus() {
+        return cardStatus;
+    }
+
+    public LocalDate getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(LocalDate expirationDate) {
+        this.expirationDate = expirationDate;
+    }
+
+    public String getPanHash() {
+        return panHash;
+    }
+
+    public void setPanHash(String panHash) {
+        this.panHash = panHash;
+    }
+
+    public String getMaskedPan() {
+        return maskedPan;
+    }
+
+    public void setMaskedPan(String maskedPan) {
+        this.maskedPan = maskedPan;
+    }
+
+    public String getLastFour() {
+        return lastFour;
+    }
+
+    public void setLastFour(String lastFour) {
+        this.lastFour = lastFour;
+    }
+
+    public String getBinNumber() {
+        return binNumber;
+    }
+
+    public void setBinNumber(String binNumber) {
+        this.binNumber = binNumber;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

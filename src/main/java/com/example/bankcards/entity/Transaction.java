@@ -69,4 +69,39 @@ public class Transaction {
         return transaction;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public Card getCard() {
+        return card;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public Currency getCurrency() {
+        return currency;
+    }
+
+    public TransactionType getTransactionType() {
+        return transactionType;
+    }
+
+    public TransactionStatus getStatus() {
+        return status;
+    }
+
+    public OffsetDateTime getTransactionTime() {
+        return transactionTime;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

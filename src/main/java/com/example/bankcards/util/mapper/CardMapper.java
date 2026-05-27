@@ -1,4 +1,4 @@
-package com.example.bankcards.util;
+package com.example.bankcards.util.mapper;
 
 import com.example.bankcards.dto.CardDTO;
 import com.example.bankcards.dto.CreateCardDTO;
@@ -18,10 +18,22 @@ public interface CardMapper {
     @Mapping(target = "lastFour", ignore = true)
     @Mapping(target = "maskedPan", ignore = true)
     @Mapping(target = "panHash", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "expirationDate", dateFormat = "yyyy-MM-dd")
     Card toCard(@NotNull CreateCardDTO createCardDTO);
 
+    @Mapping(source = "user.fullName", target = "cardHolderName")
+    @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "expirationDate", target = "expirationDate", dateFormat = "yyyy-MM-dd")
     CardDTO toCardDTO(Card card);
 
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "binNumber", ignore = true)
+    @Mapping(target = "lastFour", ignore = true)
+    @Mapping(target = "panHash", ignore = true)
+    @Mapping(target = "cardBrand", ignore = true)
+    @Mapping(target = "cardType", ignore = true)
+    @Mapping(target = "expirationDate", dateFormat = "yyyy-MM-dd")
     Card toCard(CardDTO cardDTO);
 
     List<Card> toCardList(List<CardDTO> cardDTOList);

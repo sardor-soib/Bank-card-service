@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 
-public interface TransactionManager {
+public interface TransactionService {
 
     boolean isExists(@NotNull Long id);
 

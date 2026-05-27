@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 
-public interface UserManager {
+public interface UserService {
 
     boolean isExists(@NotNull Long id);
 

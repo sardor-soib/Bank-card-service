@@ -3,15 +3,16 @@ package com.example.bankcards.service.impl;
 import com.example.bankcards.dto.UserDTO;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.repository.UserRepository;
-import com.example.bankcards.service.UserManager;
+import com.example.bankcards.service.UserService;
 import com.example.bankcards.util.Role;
-import com.example.bankcards.util.UserMapper;
+import com.example.bankcards.util.mapper.UserMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -21,17 +22,20 @@ import java.sql.SQLException;
 @Service
 @Validated
 @Transactional
-public class UserService implements UserManager {
+public class UserServiceImpl implements UserService {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+
 
     @Autowired
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -44,6 +48,9 @@ public class UserService implements UserManager {
     public UserDTO create(UserDTO dto) {
         logger.info("Creating user {}", dto);
         User user = userMapper.toEntity(dto);
+        if (dto.password() != null && !dto.password().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.password()));
+        }
         return userMapper.toDTO(userRepository.save(user));
     }
 
@@ -82,8 +89,12 @@ public class UserService implements UserManager {
     @Override
     public UserDTO update(Long id, UserDTO dto) {
         logger.info("Updating user with id {}", id);
-        requireUserExists(id);
-        User user = userMapper.toEntity(dto);
+        User user = getUserEntityById(id);
+        if (dto.fullName() != null) user.setFullName(dto.fullName());
+        if (dto.role() != null) user.setRole(Role.valueOf(dto.role()));
+        if (dto.password() != null && !dto.password().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.password()));
+        }
         return userMapper.toDTO(userRepository.save(user));
     }
 
@@ -120,7 +131,7 @@ public class UserService implements UserManager {
 
     private User getUserEntityById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 }
 

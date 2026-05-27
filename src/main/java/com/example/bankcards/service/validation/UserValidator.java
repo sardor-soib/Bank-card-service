@@ -9,7 +9,7 @@ public class UserValidator {
     }
 
     public static void validateOwner(Long userId, Card card) {
-        if (!userId.equals(card.getUser().getId())) {
+        if (card.getUser() == null || !userId.equals(card.getUser().getId())) {
             throw new IllegalArgumentException("User is not the owner of the card");
         }
     }

@@ -1,12 +1,13 @@
----
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: bank-rest-service
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     hikari:
       minimum-idle: 1
       maximum-pool-size: 5
@@ -22,11 +23,6 @@ spring:
     change-log: classpath:db/migration/db.changelog-master.yaml
     default-schema: public
     liquibase-schema: public
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://${auth0.domain}/
 logging:
   level:
     root: INFO
@@ -42,17 +38,14 @@ logging:
     max-size: 10MB
     max-history: 5
 server:
-  port: 8080
-auth:
-  jwt:
-    secret: ${JWT_SECRET:secret_key_needs_to_be_at_least_32_chars_long_minimum}
-auth0:
-  domain: ${AUTH0_DOMAIN}
-  jwks-url: https://${auth0.domain}/.well-known/jwks.json
-  audience: ${AUTH0_AUDIENCE}
+  port: ${SERVER_PORT:8080}
 bank:
   cards:
     pan-hash-secret: ${BANK_CARDS_PAN_HASH_SECRET}
+auth:
+  jwt:
+    secret: ${JWT_SECRET:secret_key_needs_to_be_at_least_32_chars_long_minimum}
+    expiration-time: 1h
 springdoc:
   package-to-scan: com.example.bankcards.controller
   tagsSorting: alpha
