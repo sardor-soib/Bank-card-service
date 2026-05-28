@@ -21,6 +21,9 @@ public class User {
     @Column(name = "email", nullable = false, unique = true)
     String email;
 
+    @Column(name = "sub", unique = true)
+    String sub;
+
     @Column(name = "phone_number", nullable = false)
     String phoneNumber;
 
@@ -80,8 +83,24 @@ public class User {
         return email;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getPhoneNumber() {
         return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getSub() {
+        return sub;
+    }
+
+    public void setSub(String sub) {
+        this.sub = sub;
     }
 
     public String getPassword() {

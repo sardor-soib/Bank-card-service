@@ -39,13 +39,20 @@ logging:
     max-history: 5
 server:
   port: ${SERVER_PORT:8080}
+security:
+  oauth2:
+    resourceserver:
+      jwt:
+        issuer-uri: https://${AUTH0_DOMAIN}/
+
 bank:
   cards:
     pan-hash-secret: ${BANK_CARDS_PAN_HASH_SECRET}
-auth:
-  jwt:
-    secret: ${JWT_SECRET:secret_key_needs_to_be_at_least_32_chars_long_minimum}
-    expiration-time: 1h
+
+auth0:
+  domain: ${AUTH0_DOMAIN}
+  audience: ${AUTH0_AUDIENCE}
+
 springdoc:
   package-to-scan: com.example.bankcards.controller
   tagsSorting: alpha

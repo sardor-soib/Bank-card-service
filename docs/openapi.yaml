@@ -6,54 +6,30 @@ info:
 servers:
   - url: http://localhost:8080
     description: Local development server
+
+tags:
+  - name: User Cards
+    description: USER role — own cards only
+  - name: Cards Admin
+    description: ADMIN role — all cards
+  - name: Users Admin
+    description: ADMIN role — user management
+  - name: Transactions
+    description: Authenticated users
+
 paths:
-  /api/v1/auth/login:
-    post:
-      tags:
-        - Authentication
-      summary: User login
-      description: Authenticates user credentials and returns a signed JWT token.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: Successful authentication
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JwtResponse'
-        '400':
-          description: Invalid input parameters
-        '401':
-          description: Authentication failed (invalid credentials)
+
+  # ── User Cards (USER role) ──────────────────────────────────────────────────
 
   /api/v1/users/me/cards:
     get:
-      tags:
-        - User Cards
+      tags: [ User Cards ]
       summary: Get cards for authenticated user
-      description: Retrieves a paginated list of bank cards owned by the currently authenticated user.
       security:
         - bearerAuth: [ ]
       parameters:
-        - name: page
-          in: query
-          description: Zero-based page index
-          required: false
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          description: Number of records per page
-          required: false
-          schema:
-            type: integer
-            default: 20
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
       responses:
         '200':
           description: Paginated list of cards
@@ -66,31 +42,20 @@ paths:
 
   /api/v1/users/me/cards/search:
     get:
-      tags:
-        - User Cards
-      summary: Search user cards
-      description: Searches for cards belonging to the authenticated user by PAN.
+      tags: [ User Cards ]
+      summary: Search user's own cards
+      description: Searches cards belonging to the authenticated user by PAN.
       security:
         - bearerAuth: [ ]
       parameters:
         - name: query
           in: query
-          description: Search term (e.g. last 4 digits of PAN)
           required: true
           schema:
             type: string
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 20
+          description: Search term (e.g. last 4 digits of PAN)
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
       responses:
         '200':
           description: Paginated search results
@@ -103,9 +68,8 @@ paths:
 
   /api/v1/users/me/cards/{cardId}/transfers:
     post:
-      tags:
-        - User Cards
-      summary: Transfer balance between user's own cards
+      tags: [ User Cards ]
+      summary: Transfer balance between own cards
       description: Transfers money from one active card owned by the user to another active card owned by the same user.
       security:
         - bearerAuth: [ ]
@@ -133,20 +97,20 @@ paths:
               type: number
               format: double
               minimum: 0.01
+              example: 100.00
       responses:
         '200':
           description: Transfer completed successfully
         '400':
-          description: Invalid input, non-matching cards, or insufficient funds
+          description: Invalid input or insufficient funds
         '401':
           description: Unauthorized
 
   /api/v1/users/me/cards/{cardId}:
     patch:
-      tags:
-        - User Cards
+      tags: [ User Cards ]
       summary: Request a card block
-      description: Flags a card belonging to the user for blocking.
+      description: Flags a card belonging to the authenticated user for blocking.
       security:
         - bearerAuth: [ ]
       parameters:
@@ -160,14 +124,13 @@ paths:
         '200':
           description: Block requested successfully
         '400':
-          description: User is not the owner of the card
+          description: Card does not belong to the user
         '401':
           description: Unauthorized
 
   /api/v1/users/me/cards/{cardId}/balance:
     get:
-      tags:
-        - User Cards
+      tags: [ User Cards ]
       summary: Get card balance
       description: Retrieves the current balance of a specific card owned by the authenticated user.
       security:
@@ -188,42 +151,180 @@ paths:
                 type: number
                 format: double
         '400':
-          description: User is not the owner of the card
+          description: Card does not belong to the user
         '401':
           description: Unauthorized
 
-  /api/v1/users:
+  # ── Cards Admin ─────────────────────────────────────────────────────────────
+
+  /api/v1/cards:
     get:
-      tags:
-        - Users Admin
-      summary: Find all users
-      description: Retrieves a paginated list of all users. (Admin only)
+      tags: [ Cards Admin ]
+      summary: Find all cards
       security:
         - bearerAuth: [ ]
       parameters:
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 20
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
       responses:
         '200':
-          description: Paginated users
+          description: Paginated list of all cards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardPage'
         '403':
-          description: Forbidden (Admin role required)
-
+          description: Forbidden
     post:
-      tags:
-        - Users Admin
+      tags: [ Cards Admin ]
+      summary: Create a new card
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCardDTO'
+      responses:
+        '201':
+          description: Card created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+        '403':
+          description: Forbidden
+
+  /api/v1/cards/search:
+    get:
+      tags: [ Cards Admin ]
+      summary: Search all cards
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: Paginated search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardPage'
+        '403':
+          description: Forbidden
+
+  /api/v1/cards/{id}:
+    get:
+      tags: [ Cards Admin ]
+      summary: Get card by ID
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Card found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+        '403':
+          description: Forbidden
+        '404':
+          description: Card not found
+    put:
+      tags: [ Cards Admin ]
+      summary: Update a card
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardDTO'
+      responses:
+        '200':
+          description: Card updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+        '403':
+          description: Forbidden
+    delete:
+      tags: [ Cards Admin ]
+      summary: Delete a card
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Card deleted
+        '403':
+          description: Forbidden
+
+  /api/v1/cards/{id}/block:
+    patch:
+      tags: [ Cards Admin ]
+      summary: Block a card
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Card blocked
+        '403':
+          description: Forbidden
+
+  /api/v1/cards/{id}/activate:
+    patch:
+      tags: [ Cards Admin ]
+      summary: Activate a card
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Card activated
+        '403':
+          description: Forbidden
+
+  # ── Users Admin ─────────────────────────────────────────────────────────────
+
+  /api/v1/users:
+    get:
+      tags: [ Users Admin ]
+      summary: Find all users
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+        '403':
+          description: Forbidden
+    post:
+      tags: [ Users Admin ]
       summary: Create a new user
-      description: Registers a new user. (Admin only)
       security:
         - bearerAuth: [ ]
       requestBody:
@@ -242,21 +343,64 @@ paths:
         '403':
           description: Forbidden
 
-  /api/v1/users/{id}:
+  /api/v1/users/search:
     get:
-      tags:
-        - Users Admin
-      summary: Find a user by ID
-      description: Retrieves a user by their unique identifier. (Admin only)
+      tags: [ Users Admin ]
+      summary: Search users
+      description: Searches users by key fields (name, email, etc.).
       security:
         - bearerAuth: [ ]
       parameters:
-        - name: id
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: Paginated search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+        '403':
+          description: Forbidden
+
+  /api/v1/users/role/{role}:
+    get:
+      tags: [ Users Admin ]
+      summary: Find users by role
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: role
           in: path
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
+            enum: [ ADMIN, USER ]
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: Paginated list of users with the given role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+        '403':
+          description: Forbidden
+
+  /api/v1/users/{id}:
+    get:
+      tags: [ Users Admin ]
+      summary: Find user by ID
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/id'
       responses:
         '200':
           description: User found
@@ -268,21 +412,13 @@ paths:
           description: Forbidden
         '404':
           description: User not found
-
     put:
-      tags:
-        - Users Admin
+      tags: [ Users Admin ]
       summary: Update a user
-      description: Updates an existing user's details. (Admin only)
       security:
         - bearerAuth: [ ]
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+        - $ref: '#/components/parameters/id'
       requestBody:
         required: true
         content:
@@ -298,117 +434,211 @@ paths:
                 $ref: '#/components/schemas/UserDTO'
         '403':
           description: Forbidden
-
     delete:
-      tags:
-        - Users Admin
+      tags: [ Users Admin ]
       summary: Delete a user
-      description: Deletes a user by ID. (Admin only)
       security:
         - bearerAuth: [ ]
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+        - $ref: '#/components/parameters/id'
       responses:
-        '240':
+        '204':
           description: User deleted
         '403':
           description: Forbidden
 
   /api/v1/users/{id}/activate:
     patch:
-      tags:
-        - Users Admin
+      tags: [ Users Admin ]
       summary: Activate user
-      description: Activates a deactivated user. (Admin only)
       security:
         - bearerAuth: [ ]
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+        - $ref: '#/components/parameters/id'
       responses:
         '200':
-          description: Activated successfully
+          description: User activated
         '403':
           description: Forbidden
 
   /api/v1/users/{id}/deactivate:
     patch:
-      tags:
-        - Users Admin
+      tags: [ Users Admin ]
       summary: Deactivate user
-      description: Deactivates an active user. (Admin only)
       security:
         - bearerAuth: [ ]
       parameters:
-        - name: id
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: User deactivated
+        '403':
+          description: Forbidden
+
+  # ── Transactions ────────────────────────────────────────────────────────────
+
+  /api/v1/transactions:
+    post:
+      tags: [ Transactions ]
+      summary: Create a transaction
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionDTO'
+      responses:
+        '201':
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionDTO'
+        '401':
+          description: Unauthorized
+
+  /api/v1/transactions/me:
+    get:
+      tags: [ Transactions ]
+      summary: Get transactions for authenticated user
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: Paginated list of transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionPage'
+        '401':
+          description: Unauthorized
+
+  /api/v1/transactions/card/{cardId}:
+    get:
+      tags: [ Transactions ]
+      summary: Get transactions for a card
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: cardId
           in: path
           required: true
           schema:
             type: integer
             format: int64
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
       responses:
         '200':
-          description: Deactivated successfully
-        '403':
-          description: Forbidden
+          description: Paginated list of transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionPage'
+        '401':
+          description: Unauthorized
+
+  /api/v1/transactions/{id}:
+    get:
+      tags: [ Transactions ]
+      summary: Get transaction by ID
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Transaction found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionDTO'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Transaction not found
+    put:
+      tags: [ Transactions ]
+      summary: Update a transaction
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionDTO'
+      responses:
+        '200':
+          description: Transaction updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionDTO'
+        '401':
+          description: Unauthorized
+    delete:
+      tags: [ Transactions ]
+      summary: Delete a transaction
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Transaction deleted
+        '401':
+          description: Unauthorized
 
 components:
+
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+    size:
+      name: size
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+
   schemas:
-    LoginRequest:
-      type: object
-      required:
-        - username
-        - password
-      properties:
-        username:
-          type: string
-          description: User email address
-          example: user@example.com
-        password:
-          type: string
-          format: password
-          example: securepassword123
-    JwtResponse:
-      type: object
-      properties:
-        token:
-          type: string
-          description: Signed Bearer token
-        type:
-          type: string
-          default: Bearer
-        id:
-          type: integer
-          format: int64
-        email:
-          type: string
-        role:
-          type: string
+
     UserDTO:
       type: object
-      required:
-        - alias
-        - password
-        - role
+      required: [ fullName, password, role ]
       properties:
         id:
           type: integer
           format: int64
-        alias:
+          readOnly: true
+        fullName:
           type: string
           example: John Doe
         password:
@@ -417,34 +647,79 @@ components:
         role:
           type: string
           enum: [ ADMIN, USER ]
+
+    UserPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDTO'
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
     CardDTO:
       type: object
       properties:
         id:
           type: integer
           format: int64
-        binNumber:
-          type: string
-          example: "411111"
-        lastFour:
-          type: string
-          example: "1234"
+          readOnly: true
         maskedPan:
           type: string
           example: "4111 11** **** 1234"
+        cardHolderName:
+          type: string
+          example: John Doe
         expirationDate:
           type: string
-          format: date
-        cardBrand:
-          type: string
-        cardType:
-          type: string
-        cardStatus:
-          type: string
-          enum: [ ACTIVE, BLOCKED, BLOCK_REQUESTED, EXPIRED ]
+          example: "2027-12"
         balance:
           type: number
           format: double
+        cardStatus:
+          type: string
+          enum: [ ACTIVE, BLOCKED, BLOCK_REQUESTED, EXPIRED ]
+        userId:
+          type: integer
+          format: int64
+
+    CreateCardDTO:
+      type: object
+      required: [ pan, cardHolderName, expirationDate, cardBrand, cardType, balance, cardStatus, userId ]
+      properties:
+        pan:
+          type: string
+          example: "4111111111111234"
+        cardHolderName:
+          type: string
+          example: John Doe
+        expirationDate:
+          type: string
+          example: "2027-12"
+        cardBrand:
+          type: string
+          example: VISA
+        cardType:
+          type: string
+          example: DEBIT
+        balance:
+          type: number
+          format: double
+          example: 0.00
+        cardStatus:
+          type: string
+          enum: [ ACTIVE, BLOCKED, BLOCK_REQUESTED, EXPIRED ]
+        userId:
+          type: integer
+          format: int64
+
     CardPage:
       type: object
       properties:
@@ -452,6 +727,45 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CardDTO'
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    TransactionDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        type:
+          type: string
+          example: TRANSFER
+        amount:
+          type: number
+          format: double
+        date:
+          type: string
+          example: "2026-05-28T10:00:00"
+        cardId:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+
+    TransactionPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionDTO'
         totalElements:
           type: integer
         totalPages:

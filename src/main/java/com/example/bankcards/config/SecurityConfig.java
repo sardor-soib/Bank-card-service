@@ -2,18 +2,20 @@ package com.example.bankcards.config;
 
 import com.example.bankcards.security.JwtToUserAuthenticationConverter;
 import com.example.bankcards.util.Role;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,8 +26,11 @@ public class SecurityConfig {
 
     private static final String ADMIN = Role.ADMIN.name();
     private static final String USER = Role.USER.name();
-
     private final JwtToUserAuthenticationConverter jwtToUserAuthenticationConverter;
+    @Value("${security.oauth2.resourceserver.jwt.issuer-uri}")
+    private String issuerUri;
+    @Value("${auth0.audience}")
+    private String auth0Audience;
 
     public SecurityConfig(JwtToUserAuthenticationConverter jwtToUserAuthenticationConverter) {
         this.jwtToUserAuthenticationConverter = jwtToUserAuthenticationConverter;
@@ -39,20 +44,12 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/api/v1/auth/**" // Allow access to authentication endpoints
+                                "/swagger-ui.html"
                         ).permitAll()
 
-                        // Card user actions & user transactions
                         .requestMatchers("/api/v1/users/me/cards/**", "/api/v1/transactions/me").hasAnyRole(USER)
-
-                        // User management: admin only
                         .requestMatchers("/api/v1/users/**").hasRole(ADMIN)
-
-                        // Card admin actions
                         .requestMatchers("/api/v1/cards/**").hasRole(ADMIN)
-
-                        // Transfers: admin only
                         .requestMatchers("/api/v1/transactions/**").hasRole(ADMIN)
 
                         .anyRequest().authenticated()
@@ -62,8 +59,22 @@ public class SecurityConfig {
                         .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
                         .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtToUserAuthenticationConverter)));
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt
+                                .decoder(jwtDecoder())
+                                .jwtAuthenticationConverter(jwtToUserAuthenticationConverter)
+                        )
+                );
         return http.build();
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        NimbusJwtDecoder decoder = JwtDecoders.fromIssuerLocation(issuerUri);
+        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
+        OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator());
+        decoder.setJwtValidator(withAudience);
+        return decoder;
     }
 
     @Bean
@@ -71,10 +82,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder);
-        return new ProviderManager(authenticationProvider);
+    private OAuth2TokenValidator<Jwt> audienceValidator() {
+        return jwt -> {
+            if (jwt.getAudience().contains(auth0Audience)) {
+                return OAuth2TokenValidatorResult.success();
+            }
+            return OAuth2TokenValidatorResult.failure(
+                    new OAuth2Error("invalid_token", "Required audience missing", null)
+            );
+        };
     }
 }

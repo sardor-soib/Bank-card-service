@@ -3,7 +3,9 @@ package com.example.bankcards.service.impl;
 import com.example.bankcards.dto.CardDTO;
 import com.example.bankcards.dto.CreateCardDTO;
 import com.example.bankcards.entity.Card;
+import com.example.bankcards.entity.User;
 import com.example.bankcards.repository.CardRepository;
+import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.security.PanHashEncoder;
 import com.example.bankcards.service.CardService;
 import com.example.bankcards.service.TransactionService;
@@ -23,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.YearMonth;
 
 @Service
 @Validated
@@ -36,13 +38,15 @@ public class CardServiceImpl implements CardService {
     private final CardMapper cardMapper;
     private final PanHashEncoder panHashEncoder;
     private final TransactionService transactionService;
+    private final UserRepository userRepository;
 
     @Autowired
-    public CardServiceImpl(CardRepository cardRepository, CardMapper cardMapper, PanHashEncoder panHashEncoder, TransactionService transactionService) {
+    public CardServiceImpl(CardRepository cardRepository, CardMapper cardMapper, PanHashEncoder panHashEncoder, TransactionService transactionService, UserRepository userRepository) {
         this.cardRepository = cardRepository;
         this.cardMapper = cardMapper;
         this.panHashEncoder = panHashEncoder;
         this.transactionService = transactionService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -111,6 +115,10 @@ public class CardServiceImpl implements CardService {
 
         Card card = cardMapper.toCard(createCardDTO);
 
+        User user = userRepository.findById(createCardDTO.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + createCardDTO.userId()));
+        card.setUser(user);
+
         card.applyPanData(
                 PanMasker.bin(rawPan),
                 PanMasker.lastFour(rawPan),
@@ -169,7 +177,7 @@ public class CardServiceImpl implements CardService {
             }
         }
         if (cardDto.expirationDate() != null) {
-            card.setExpirationDate(LocalDate.parse(cardDto.expirationDate()));
+            card.setExpirationDate(YearMonth.parse(cardDto.expirationDate()).atDay(1));
         }
         return cardMapper.toCardDTO(cardRepository.save(card));
     }

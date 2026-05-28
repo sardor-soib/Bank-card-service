@@ -6,8 +6,11 @@ import com.example.bankcards.entity.Card;
 import jakarta.validation.constraints.NotNull;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -19,12 +22,12 @@ public interface CardMapper {
     @Mapping(target = "maskedPan", ignore = true)
     @Mapping(target = "panHash", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "expirationDate", dateFormat = "yyyy-MM-dd")
+    @Mapping(target = "expirationDate", source = "expirationDate", qualifiedByName = "parseYearMonth")
     Card toCard(@NotNull CreateCardDTO createCardDTO);
 
     @Mapping(source = "user.fullName", target = "cardHolderName")
     @Mapping(source = "user.id", target = "userId")
-    @Mapping(source = "expirationDate", target = "expirationDate", dateFormat = "yyyy-MM-dd")
+    @Mapping(source = "expirationDate", target = "expirationDate", qualifiedByName = "formatYearMonth")
     CardDTO toCardDTO(Card card);
 
     @Mapping(target = "user", ignore = true)
@@ -33,8 +36,20 @@ public interface CardMapper {
     @Mapping(target = "panHash", ignore = true)
     @Mapping(target = "cardBrand", ignore = true)
     @Mapping(target = "cardType", ignore = true)
-    @Mapping(target = "expirationDate", dateFormat = "yyyy-MM-dd")
+    @Mapping(target = "expirationDate", source = "expirationDate", qualifiedByName = "parseYearMonth")
     Card toCard(CardDTO cardDTO);
+
+    @Named("parseYearMonth")
+    default LocalDate parseYearMonth(String yearMonth) {
+        if (yearMonth == null) return null;
+        return YearMonth.parse(yearMonth).atDay(1);
+    }
+
+    @Named("formatYearMonth")
+    default String formatYearMonth(LocalDate date) {
+        if (date == null) return null;
+        return YearMonth.from(date).toString();
+    }
 
     List<Card> toCardList(List<CardDTO> cardDTOList);
 
