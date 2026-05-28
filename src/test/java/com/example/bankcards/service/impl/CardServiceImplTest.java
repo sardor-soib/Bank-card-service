@@ -5,6 +5,7 @@ import com.example.bankcards.dto.CreateCardDTO;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.repository.CardRepository;
+import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.security.PanHashEncoder;
 import com.example.bankcards.service.TransactionService;
 import com.example.bankcards.util.CardStatus;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,6 +48,8 @@ class CardServiceImplTest {
     PanHashEncoder panHashEncoder;
     @Mock
     TransactionService transactionService;
+    @Mock
+    UserRepository userRepository;
 
     @InjectMocks
     CardServiceImpl cardServiceImpl;
@@ -192,6 +196,7 @@ class CardServiceImplTest {
         when(panHashEncoder.encode("4111111111111111")).thenReturn("hash-value");
         when(cardRepository.save(mappedCard)).thenReturn(savedCard);
         when(cardMapper.toCardDTO(savedCard)).thenReturn(returnedDto);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
 
         CardDTO result = cardServiceImpl.create(dto);
 
@@ -280,7 +285,7 @@ class CardServiceImplTest {
 
     @Test
     void update_existingCard_updatesExpirationDateAndSaves() {
-        CardDTO dto = CardDTO.builder().id(10L).expirationDate("2030-12-31").build();
+        CardDTO dto = CardDTO.builder().id(10L).expirationDate("2030-12").build();
         Card saved = org.mockito.Mockito.mock(Card.class);
         CardDTO returned = CardDTO.builder().id(10L).build();
 
@@ -289,7 +294,7 @@ class CardServiceImplTest {
         when(cardMapper.toCardDTO(saved)).thenReturn(returned);
 
         assertThat(cardServiceImpl.update(10L, dto)).isSameAs(returned);
-        verify(sourceCard).setExpirationDate(java.time.LocalDate.of(2030, 12, 31));
+        verify(sourceCard).setExpirationDate(LocalDate.of(2030, 12, 1));
     }
 
     @Test

@@ -1,0 +1,40 @@
+@startuml
+title Authentication & Authorized Request Flow
+
+actor User
+participant "Client App" as Client
+participant "Auth0" as Auth0
+participant "Spring Security\nFilter" as Security
+participant "JwtToUserAuth\nConverter" as Converter
+participant "UserRepository" as UserRepo
+participant "Controller" as API
+database "PostgreSQL" as DB
+
+== Authentication ==
+User -> Client: Login
+Client -> Auth0: POST /oauth/token\n(credentials)
+Auth0 --> Client: JWT (access_token)
+
+== Authorized API Request ==
+User -> Client: Perform action
+Client -> Security: HTTP Request\n+ Bearer JWT
+Security -> Auth0: Fetch JWK Set\n(first request only)
+Auth0 --> Security: Public keys
+Security -> Security: Validate signature,\nissuer & audience
+Security -> Converter: Convert JWT to Authentication
+Converter -> UserRepo: findBySub(sub)
+alt User found
+    UserRepo --> Converter: User
+else First login — fallback to email
+    Converter -> UserRepo: findByEmail(email)
+    UserRepo --> Converter: User
+    Converter -> UserRepo: save(user with sub)
+end
+Converter --> Security: UsernamePasswordAuthenticationToken
+Security -> API: Forward authenticated request
+API -> DB: Query / Update
+DB --> API: Result
+API --> Client: HTTP Response
+Client --> User: Display result
+
+@enduml

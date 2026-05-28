@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: developer
+      changes:
+        - addColumn:
+            schemaName: bank_rest_service
+            tableName: users
+            columns:
+              - column:
+                  name: sub
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true
+                    unique: true

@@ -1,19 +1,25 @@
 @startuml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-title Debet Cards System - Context
+title Debit Cards System - Context
 
 Person(customer, "Customer", "Пользователь пользуется картами")
 Person(admin, "Admin", "Пользователь управляет всеми картами и пользователями")
 
-System(debetCardsSystem, "Debet Cards System", "Управления картами")
 System(transactionsSystem, "TransactionsSystem", "Упраления переводами")
+System(debitCardsSystem, "Debit Cards System", "Управления картами")
 System(usersSystem, "Users System", "Управления пользователями")
 
+System_Ext(auth0, "Auth0", "Identity Provider. Аутентификация и выдача JWT токенов")
 
-Rel(customer, debetCardsSystem, "Смотрит свои карты/баланс, запрашивает блок/разблок. карты", "HTTPS")
+Rel(customer, debitCardsSystem, "Смотрит свои карты/баланс, запрашивает блок/разблок. карты", "HTTPS")
 Rel(customer, transactionsSystem, "Делает переводы между своими картами", "HTTPS")
-Rel(admin, debetCardsSystem, "Управляет всеми картами(CRUD) + блок/разблок карты, ", "HTTPS")
+Rel(customer, auth0, "Аутентифицируется", "HTTPS")
+
+Rel(admin, debitCardsSystem, "Управляет всеми картами(CRUD) + блок/разблок карты", "HTTPS")
+Rel(admin, auth0, "Аутентифицируется", "HTTPS")
 Rel(admin, usersSystem, "Управляет всеми пользователями(CRUD)", "HTTPS")
+
+Rel(debitCardsSystem, auth0, "Валидирует JWT токены", "HTTPS")
 
 @enduml

@@ -1,7 +1,7 @@
 @startuml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-title Debet Cards System - Containers
+title Debit Cards System - Containers
 
 Person(customer, "Customer/Admin", "Пользователь")
 
@@ -11,8 +11,12 @@ System_Boundary(s1, "Cards System") {
   ContainerDb(db, "PostgreSQL", "DB", "Карты, пользователи, транзакции")
 }
 
+System_Ext(auth0, "Auth0", "Identity Provider")
+
+Rel(customer, auth0, "Логин, получает JWT", "HTTPS")
 Rel(customer, web, "Работает с UI", "HTTPS")
-Rel(web, api, "REST API", "HTTPS")
+Rel(web, api, "REST API + Bearer JWT", "HTTPS")
+Rel(api, auth0, "Валидирует JWT (JWK Set)", "HTTPS")
 Rel(api, db, "CRUD", "JDBC")
 
 @enduml

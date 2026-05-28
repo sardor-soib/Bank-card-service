@@ -17,6 +17,7 @@ public interface UserMapper {
 
     @Mapping(target = "cards", ignore = true)
     @Mapping(target = "transactions", ignore = true)
+    @Mapping(target = "sub", ignore = true)
     User toEntity(@NotNull UserDTO userDTO);
 
     List<UserDTO> toDTOList(@NotNull List<User> users);

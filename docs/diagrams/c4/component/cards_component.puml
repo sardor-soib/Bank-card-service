@@ -3,7 +3,12 @@
 
 title Core API - Components
 
+System_Ext(auth0, "Auth0", "Identity Provider (JWK Set endpoint)")
+
 Container_Boundary(api, "Core API (Spring Boot)") {
+
+  Component(securityFilter, "SecurityFilterChain", "Spring Security", "Проверяет Bearer JWT на каждый запрос")
+  Component(jwtConverter, "JwtToUserAuthenticationConverter", "Security Component", "Резолвит локального User по sub claim")
 
   Component(cardController, "CardController", "Spring MVC Controller", "HTTP endpoints")
   Component(userController, "UserController", "Spring MVC Controller", "HTTP endpoints")
@@ -13,23 +18,27 @@ Container_Boundary(api, "Core API (Spring Boot)") {
   Component(userService, "UserService", "Service", "Бизнес-операции по пользователям")
   Component(transactionService, "TransactionService", "Service", "Бизнес-операции по транзакциям")
 
-  Component("cardRepository", "CardRepository", "Repository", "Доступ к данным")
+  Component(cardRepository, "CardRepository", "Repository", "Доступ к данным")
   Component(userRepository, "UserRepository", "Repository", "Доступ к данным")
   Component(transactionRepository, "TransactionRepository", "Repository", "Доступ к данным")
 
   ComponentDb(db, "PostgreSQL", "DB", "cards/users/transactions")
 }
 
-Rel("cardController", "cardService", "calls")
-Rel("cardService", "cardRepository", "calls")
-Rel("cardRepository", db, "reads/writes")
+Rel(securityFilter, auth0, "Fetches JWK Set для валидации подписи", "HTTPS")
+Rel(securityFilter, jwtConverter, "Передаёт валидный JWT")
+Rel(jwtConverter, userRepository, "Ищет User по sub / email")
 
-Rel("userController", "userService", "calls")
-Rel("userService", "userRepository", "calls")
-Rel("userRepository", db, "reads/writes")
+Rel(cardController, cardService, "calls")
+Rel(cardService, cardRepository, "calls")
+Rel(cardRepository, db, "reads/writes")
 
-Rel("transactionController", "transactionService", "calls")
-Rel("transactionService", "transactionRepository", "calls")
-Rel("transactionRepository", db, "reads/writes")
+Rel(userController, userService, "calls")
+Rel(userService, userRepository, "calls")
+Rel(userRepository, db, "reads/writes")
+
+Rel(transactionController, transactionService, "calls")
+Rel(transactionService, transactionRepository, "calls")
+Rel(transactionRepository, db, "reads/writes")
 
 @enduml
