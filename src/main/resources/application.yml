@@ -52,5 +52,7 @@ auth0:
 springdoc:
   package-to-scan: com.example.bankcards.controller
   tagsSorting: alpha
+  api-docs:
+    path: /v3/api-docs.yaml
   swagger-ui:
     path: /swagger-ui.html

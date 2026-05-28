@@ -51,7 +51,8 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml"
 
                         ).permitAll()
 
@@ -79,7 +80,8 @@ public class SecurityConfig {
     @Bean
     @Lazy
     public JwtDecoder jwtDecoder() {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(issuerUri + ".well-known/jwks.json").build();
+        String issuer = "https://" + issuerUri + "/";
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(issuer + ".well-known/jwks.json").build();
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
         OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator());
         decoder.setJwtValidator(withAudience);
