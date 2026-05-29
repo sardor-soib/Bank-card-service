@@ -1,122 +1,198 @@
 # Bank Card Management Service
 
-A Spring Boot REST API for managing bank cards, users, and transactions with JWT-based authentication and role-based
-access control.
+A Spring Boot REST API for managing bank cards, users, and transactions.
+Authentication is delegated to **Auth0** (OAuth2 / JWT). The service acts as a
+resource server — it validates tokens issued by Auth0 and maps them to local
+database users.
 
 ## Requirements
 
 - Java 17+
 - Maven 3.8+
 - Docker & Docker Compose
+- An [Auth0](https://auth0.com) tenant
 
-## Quick Start
+## Getting Access Tokens
 
-### 1. Start the database
+Source your `.env` first, then run either command:
 
 ```bash
-docker compose up -d
+source .env
 ```
 
-This starts a PostgreSQL 17 container on port `5432`. Liquibase migrations run automatically on the first app startup.
+### Admin token (M2M — `client_credentials`)
 
-### 2. Configure environment variables
+Maps to the seeded user `admin@example.com` (`ROLE_ADMIN`, id=1).
 
-Copy the example and fill in values:
+```bash
+curl -s -X POST "https://$AUTH0_DOMAIN/oauth/token" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"grant_type\": \"client_credentials\",
+    \"client_id\": \"$AUTH0_CLIENT_ID\",
+    \"client_secret\": \"$AUTH0_CLIENT_SECRET\",
+    \"audience\": \"$AUTH0_AUDIENCE\"
+  }"
+```
+
+### User token (password grant)
+
+Maps to the seeded user `user@example.com` (`ROLE_USER`, id=2).
+
+```bash
+curl -s -X POST "https://$AUTH0_DOMAIN/oauth/token" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"grant_type\": \"password\",
+    \"username\": \"$AUTH0_USER_EMAIL\",
+    \"password\": \"$AUTH0_USER_PASSWORD\",
+    \"client_id\": \"$AUTH0_CLIENT_ID\",
+    \"client_secret\": \"$AUTH0_CLIENT_SECRET\",
+    \"audience\": \"$AUTH0_AUDIENCE\",
+    \"scope\": \"openid email\"
+  }"
+```
+
+Both responses contain an `access_token` field. Copy only that value — not the
+surrounding JSON — and pass it as the Bearer token:
+
+```bash
+curl http://localhost:8080/api/v1/users/me/cards \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+## Environment Variables
+
+Copy the example file and fill in your values:
 
 ```bash
 cp .env.example .env
 ```
 
-| Variable                     | Required | Description                                       | Example                                              |
-|------------------------------|----------|---------------------------------------------------|------------------------------------------------------|
-| `DB_URL`                     | Yes      | JDBC connection URL                               | `jdbc:postgresql://localhost:5432/bank-rest-service` |
-| `DB_USERNAME`                | Yes      | Database username                                 | `postgres`                                           |
-| `DB_PASSWORD`                | Yes      | Database password                                 | `12345`                                              |
-| `BANK_CARDS_PAN_HASH_SECRET` | Yes      | HMAC-SHA256 secret for PAN hashing (min 32 chars) | `my-secret-pan-hash-key-32chars!!`                   |
-| `JWT_SECRET`                 | No       | HMAC-SHA256 secret for JWT signing (min 32 chars) | `my-jwt-secret-key-at-least-32-ch`                   |
+| Variable                     | Required | Description                                                |
+|------------------------------|----------|------------------------------------------------------------|
+| `SERVER_PORT`                | No       | HTTP port (default: `8080`)                                |
+| `POSTGRES_DB`                | Yes      | PostgreSQL database name                                   |
+| `POSTGRES_USER`              | Yes      | PostgreSQL username                                        |
+| `POSTGRES_PASSWORD`          | Yes      | PostgreSQL password                                        |
+| `POSTGRES_HOST`              | Yes      | PostgreSQL host (use `db` when running via Docker Compose) |
+| `POSTGRES_PORT`              | Yes      | PostgreSQL port (default: `5432`)                          |
+| `SPRING_DATASOURCE_URL`      | Yes      | Full JDBC URL, e.g. `jdbc:postgresql://db:5432/bankcards`  |
+| `SPRING_DATASOURCE_USERNAME` | Yes      | Same as `POSTGRES_USER`                                    |
+| `SPRING_DATASOURCE_PASSWORD` | Yes      | Same as `POSTGRES_PASSWORD`                                |
+| `BANK_CARDS_PAN_HASH_SECRET` | Yes      | HMAC-SHA256 secret for PAN hashing — min 32 chars          |
+| `AUTH0_DOMAIN`               | Yes      | Auth0 tenant domain, e.g. `your-tenant.eu.auth0.com`       |
+| `AUTH0_AUDIENCE`             | Yes      | Auth0 API identifier, e.g. `https://bank-card-service`     |
+| `AUTH0_CLIENT_ID`            | Tests    | M2M app Client ID — used to fetch the admin token          |
+| `AUTH0_CLIENT_SECRET`        | Tests    | M2M app Client Secret                                      |
+| `AUTH0_USER_EMAIL`           | Tests    | Test user email — used to fetch a user token               |
+| `AUTH0_USER_PASSWORD`        | Tests    | Test user password                                         |
 
-> `JWT_SECRET` has a built-in default and is optional for local development. Use a strong secret in production.
-
-### 3. Run the application
+Generate `BANK_CARDS_PAN_HASH_SECRET`:
 
 ```bash
-mvn spring-boot:run \
-  -Dspring-boot.run.jvmArguments="\
-  -DDB_URL=jdbc:postgresql://localhost:5432/bank-rest-service \
-  -DDB_USERNAME=postgres \
-  -DDB_PASSWORD=12345 \
-  -DBANK_CARDS_PAN_HASH_SECRET=my-secret-pan-hash-key-32chars!!"
+openssl rand -base64 32
 ```
 
-Or export variables first:
+---
+
+## Running the Application
+
+### Option A — Docker Compose (recommended)
+
+Builds and starts both the app and PostgreSQL from your working tree:
 
 ```bash
-export DB_URL=jdbc:postgresql://localhost:5432/bank-rest-service
-export DB_USERNAME=postgres.yaml
-export DB_PASSWORD=12345
-export BANK_CARDS_PAN_HASH_SECRET=my-secret-pan-hash-key-32chars!!
+docker compose up --build
+```
 
+The application starts on **http://localhost:8080** (or `SERVER_PORT`).
+Liquibase migrations run automatically on first startup.
+
+### Option B — Local Maven
+
+Start only the database container:
+
+```bash
+docker compose up -d db
+```
+
+Then run the app (variables are loaded from `.env` automatically via
+`spring.config.import`):
+
+```bash
 mvn spring-boot:run
 ```
 
-The application starts on **http://localhost:8080**.
+---
 
-## API Documentation
+## Seed Data
 
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **OpenAPI spec**: [`docs/openapi.yaml`](docs/openapi.yaml)
+Liquibase seeds the following records on a fresh database:
 
-## Authentication
+| Table          | ID | Detail                                          |
+|----------------|----|-------------------------------------------------|
+| `users`        | 1  | `admin@example.com`, `ROLE_ADMIN`               |
+| `users`        | 2  | `user@example.com`, `ROLE_USER`                 |
+| `cards`        | 1  | VISA `**** **** **** 1111`, balance 5 000 USD   |
+| `cards`        | 2  | Mastercard `**** **** **** 5559`, balance 0 USD |
+| `transactions` | 1  | 500 USD DEBIT on card 1 → card 2                |
+| `transactions` | 2  | 500 USD CREDIT on card 2                        |
 
-All endpoints except `/api/v1/auth/login` and `/api/v1/auth/register` require a Bearer token.
+The seeded users have no `sub` field set. On first login the JWT converter
+links the token to the local user by matching the Auth0 `email` claim, then
+persists the `sub` for future lookups.
 
-**Register:**
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password123","fullName":"John Doe","phoneNumber":"+1234567890"}'
-```
-
-**Login:**
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"user@example.com","password":"password123"}'
-```
-
-Both return:
-
-```json
-{
-  "token": "<jwt>",
-  "type": "Bearer",
-  "id": 1,
-  "email": "user@example.com",
-  "role": "USER"
-}
-```
-
-Use the token in requests:
-
-```bash
-curl http://localhost:8080/api/v1/users/me/cards \
-  -H "Authorization: Bearer <jwt>"
-```
+---
 
 ## Roles
 
-| Role    | Access                                                               |
-|---------|----------------------------------------------------------------------|
-| `ADMIN` | Full access: manage all cards, users, transactions                   |
-| `USER`  | Own cards only: view, search, request block, transfer, check balance |
+| Role    | Endpoints                                                   |
+|---------|-------------------------------------------------------------|
+| `ADMIN` | `GET/POST/PUT/DELETE /api/v1/users/**`                      |
+|         | `GET/POST/PUT/DELETE /api/v1/cards/**`                      |
+|         | `GET /api/v1/transactions/**`                               |
+| `USER`  | `GET/PATCH/POST /api/v1/users/me/cards/**` (own cards only) |
+|         | `GET /api/v1/transactions/me`                               |
 
-## Running Tests
+Any token whose `sub` claim ends with `@clients` (Auth0 M2M convention) is
+automatically granted `ROLE_ADMIN`. Regular user tokens are matched against the
+local `users` table by `sub`, with an `email` claim fallback for first login.
 
-```bash
-mvn test
-```
+---
+
+## API Documentation
+
+- **Swagger UI**: http://localhost:8080/swagger-ui/index.html
+- **OpenAPI JSON**: http://localhost:8080/v3/api-docs
+
+---
+
+## Automated Tests — Postman Collections
+
+Two ready-to-import collections are in the `docs/` directory.
+
+### `docs/admin-collection.json` — ROLE_ADMIN endpoints
+
+1. Import into Postman.
+2. Open **Collection Variables** and set `token` to your M2M `access_token`.
+3. All requests inherit `Authorization: Bearer {{token}}`.
+4. "Create card" and "Create user" requests include a **Pre-request Script** that
+   generates a unique PAN / email on every run — no manual edits required.
+
+### `docs/user-collection.json` — ROLE_USER endpoints
+
+1. Import into Postman.
+2. Open **Collection Variables** and set `userToken` to your user `access_token`.
+3. All requests inherit `Authorization: Bearer {{userToken}}`.
+
+> **Important:** paste only the `access_token` string into the variable — not the
+> full JSON response. The token ends before the `","` separator; everything from
+> `","id_token":"...` onwards must be excluded.
+
+---
 
 ## Project Structure
 
@@ -124,18 +200,22 @@ mvn test
 src/
 ├── main/
 │   ├── java/com/example/bankcards/
-│   │   ├── config/          # Security, JWT, OpenAPI configuration
-│   │   ├── controller/      # REST controllers
+│   │   ├── config/          # Auth0Properties, SecurityConfig, CustomUserDetails
+│   │   ├── controller/      # REST controllers + RestExceptionHandler
 │   │   ├── dto/             # Request/response DTOs
-│   │   ├── entity/          # JPA entities
+│   │   ├── entity/          # JPA entities (User, Card, Transaction)
+│   │   ├── exception/       # ResourceNotFoundException
 │   │   ├── repository/      # Spring Data repositories
-│   │   ├── security/        # JWT converter, PAN hashing
-│   │   ├── service/         # Business logic
+│   │   ├── security/        # JwtToUserAuthenticationConverter, PanHashEncoder
+│   │   ├── service/         # Business logic + CardExpirationScheduler
 │   │   └── util/            # Enums, mappers
 │   └── resources/
 │       ├── application.yml
-│       └── db/migration/    # Liquibase changelogs
+│       └── db/migration/    # Liquibase changelogs (001-007)
 docs/
-└── openapi.yaml             # Full OpenAPI 3.0 specification
-docker-compose.yml           # PostgreSQL dev environment
+├── admin-collection.json    # Postman — ROLE_ADMIN endpoints
+└── user-collection.json     # Postman — ROLE_USER endpoints
+test-api.sh                  # End-to-end shell test script
+docker-compose.yml           # PostgreSQL + app (builds from working tree)
+.env.example                 # Environment variable template
 ```
