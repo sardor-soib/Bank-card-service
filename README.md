@@ -5,19 +5,59 @@ Authentication is delegated to **Auth0** (OAuth2 / JWT). The service acts as a
 resource server — it validates tokens issued by Auth0 and maps them to local
 database users.
 
+## Quick Start (Test Environment)
+
+A ready-to-use test environment is committed to the repo — no Auth0 setup required.
+
+### Option A — Docker Compose (no setup needed)
+
+```bash
+docker compose up --build
+```
+
+`.env.test` is loaded automatically. The app starts on **http://localhost:8080**.
+
+### Option B — Local Maven
+
+Start only the database:
+
+```bash
+docker compose up -d db
+```
+
+Then run the app:
+
+```bash
+mvn spring-boot:run
+```
+
+`.env.test` is picked up automatically via `spring.config.import`.
+
+To get tokens for the test tenant, source the test env file first:
+
+```bash
+source .env.test
+```
+
+Then use the curl commands from the [Getting Access Tokens](#getting-access-tokens) section below.
+
+---
+
 ## Requirements
 
 - Java 17+
 - Maven 3.8+
 - Docker & Docker Compose
-- An [Auth0](https://auth0.com) tenant
+- An [Auth0](https://auth0.com) tenant (not needed when using `.env.test`)
 
 ## Getting Access Tokens
 
-Source your `.env` first, then run either command:
+Source your env file first (use `.env.test` for the shared test tenant):
 
 ```bash
-source .env
+source .env.test   # test tenant — no setup needed
+# or
+source .env        # your own tenant
 ```
 
 ### Admin token (M2M — `client_credentials`)
