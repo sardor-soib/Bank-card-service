@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 6
+      author: developer
+      context: "!test"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO bank_rest_service.transactions
+                (card_id, user_id, amount, currency, transaction_type, status, transaction_time, created_at)
+              VALUES
+                ((SELECT card_id FROM bank_rest_service.cards WHERE masked_pan = '**** **** **** 1111' LIMIT 1),
+                 (SELECT user_id FROM bank_rest_service.users WHERE email = 'user@example.com'),
+                 500.00, 'USD', 'DEBIT', 'POSTED',
+                 NOW(), NOW()),
+                ((SELECT card_id FROM bank_rest_service.cards WHERE masked_pan = '**** **** **** 5559' LIMIT 1),
+                 (SELECT user_id FROM bank_rest_service.users WHERE email = 'user@example.com'),
+                 500.00, 'USD', 'CREDIT', 'POSTED',
+                 NOW(), NOW());

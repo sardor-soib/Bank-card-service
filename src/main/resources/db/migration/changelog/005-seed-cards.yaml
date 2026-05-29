@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 5
+      author: developer
+      context: "!test"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO bank_rest_service.cards
+                (bin_number, last_four, masked_pan, pan_hash, expiration_date, balance, card_brand, card_type, card_status, currency, owner_id)
+              VALUES
+                ('411111', '1111', '**** **** **** 1111', '8bfee1a919983de37f51289e08a2c99d12d8c0ad082dfcfdb0fa07eb68378e70',
+                 '2028-12-01', 5000.00, 'VISA', 'DEBIT', 'ACTIVE', 'USD',
+                 (SELECT user_id FROM bank_rest_service.users WHERE email = 'user@example.com')),
+                ('550000', '5559', '**** **** **** 5559', '8bac5e6649eeed3d58b8f0125c0fee4da28f2da9e851c2bdcaaec8a642e93cfa',
+                 '2028-12-01', 0.00, 'MASTERCARD', 'CREDIT', 'ACTIVE', 'USD',
+                 (SELECT user_id FROM bank_rest_service.users WHERE email = 'user@example.com'));

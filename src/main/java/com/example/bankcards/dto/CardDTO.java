@@ -9,6 +9,7 @@ public record CardDTO(
         String expirationDate,
         BigDecimal balance,
         String cardStatus,
+        String currency,
         Long userId
 ) {
 
@@ -23,6 +24,7 @@ public record CardDTO(
         private String expirationDate;
         private BigDecimal balance;
         private String cardStatus;
+        private String currency;
         private Long userId;
 
         public CardDTO.Builder id(Long id) {
@@ -55,13 +57,18 @@ public record CardDTO(
             return this;
         }
 
+        public CardDTO.Builder currency(String currency) {
+            this.currency = currency;
+            return this;
+        }
+
         public CardDTO.Builder userId(Long userId) {
             this.userId = userId;
             return this;
         }
 
         public CardDTO build() {
-            return new CardDTO(id, maskedPan, cardHolderName, expirationDate, balance, cardStatus, userId);
+            return new CardDTO(id, maskedPan, cardHolderName, expirationDate, balance, cardStatus, currency, userId);
         }
     }
 }

@@ -4,6 +4,7 @@ import com.example.bankcards.dto.TransactionDTO;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.Transaction;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.TransactionRepository;
 import com.example.bankcards.util.mapper.TransactionMapper;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -23,7 +23,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -47,9 +46,9 @@ class TransactionServiceImplTest {
 
     @Test
     void formTransactions_savesDebitAndCreditTransactions() {
-        User user = org.mockito.Mockito.mock(User.class);
-        Card source = org.mockito.Mockito.mock(Card.class);
-        Card target = org.mockito.Mockito.mock(Card.class);
+        User user = mock(User.class);
+        Card source = mock(Card.class);
+        Card target = mock(Card.class);
         when(source.getUser()).thenReturn(user);
         when(target.getUser()).thenReturn(user);
 
@@ -59,22 +58,8 @@ class TransactionServiceImplTest {
     }
 
     @Test
-    void create_savesAndMapsBack() {
-        TransactionDTO input = TransactionDTO.builder().amount(new BigDecimal("10")).build();
-        Transaction mapped = org.mockito.Mockito.mock(Transaction.class);
-        Transaction saved = org.mockito.Mockito.mock(Transaction.class);
-        TransactionDTO returned = TransactionDTO.builder().id(99L).build();
-
-        when(transactionMapper.toTransaction(input)).thenReturn(mapped);
-        when(transactionRepository.save(mapped)).thenReturn(saved);
-        when(transactionMapper.toTransactionDTO(saved)).thenReturn(returned);
-
-        assertThat(transactionServiceImpl.create(input)).isSameAs(returned);
-    }
-
-    @Test
     void findById_existing_returnsDto() {
-        Transaction transaction = org.mockito.Mockito.mock(Transaction.class);
+        Transaction transaction = mock(Transaction.class);
         TransactionDTO dto = TransactionDTO.builder().id(1L).build();
 
         when(transactionRepository.findById(1L)).thenReturn(Optional.of(transaction));
@@ -125,50 +110,5 @@ class TransactionServiceImplTest {
         when(transactionMapper.toTransactionDTOPage(page)).thenReturn(dtoPage);
 
         assertThat(transactionServiceImpl.findAll(pageable)).isSameAs(dtoPage);
-    }
-
-    @Test
-    void update_existing_saves() {
-        TransactionDTO dto = TransactionDTO.builder().id(1L).build();
-        Transaction mapped = org.mockito.Mockito.mock(Transaction.class);
-        Transaction saved = org.mockito.Mockito.mock(Transaction.class);
-        TransactionDTO returned = TransactionDTO.builder().id(1L).build();
-
-        when(transactionRepository.existsById(1L)).thenReturn(true);
-        when(transactionMapper.toTransaction(dto)).thenReturn(mapped);
-        when(transactionRepository.save(mapped)).thenReturn(saved);
-        when(transactionMapper.toTransactionDTO(saved)).thenReturn(returned);
-
-        assertThat(transactionServiceImpl.update(1L, dto)).isSameAs(returned);
-    }
-
-    @Test
-    void update_missing_throws() {
-        when(transactionRepository.existsById(404L)).thenReturn(false);
-
-        Throwable thrown = catchThrowable(() -> transactionServiceImpl.update(404L, TransactionDTO.builder().id(404L).build()));
-
-        assertThat(thrown).as("Expected ResourceNotFoundException for missing transaction").isInstanceOf(ResourceNotFoundException.class);
-
-        verify(transactionRepository, never()).save(any());
-    }
-
-    @Test
-    void remove_existing_deletes() {
-        when(transactionRepository.existsById(1L)).thenReturn(true);
-
-        transactionServiceImpl.remove(1L);
-
-        verify(transactionRepository).deleteById(1L);
-    }
-
-    @Test
-    void remove_missing_throws() {
-        when(transactionRepository.existsById(404L)).thenReturn(false);
-
-        assertThatThrownBy(() -> transactionServiceImpl.remove(404L))
-                .isInstanceOf(ResourceNotFoundException.class);
-
-        verify(transactionRepository, never()).deleteById(any());
     }
 }

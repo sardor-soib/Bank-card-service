@@ -72,7 +72,7 @@ class CardControllerTest {
     @Test
     void createCard_delegatesToManager() {
         CreateCardDTO input = new CreateCardDTO("4111111111111111", "John", "2030-01-01",
-                "VISA", "DEBIT", BigDecimal.ZERO, "ACTIVE", 1L);
+                "VISA", "DEBIT", BigDecimal.ZERO, "ACTIVE", "USD", 1L);
         CardDTO returned = CardDTO.builder().id(1L).build();
         when(cardService.create(input)).thenReturn(returned);
 

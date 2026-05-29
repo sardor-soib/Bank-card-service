@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: developer
+      changes:
+        - addColumn:
+            schemaName: bank_rest_service
+            tableName: cards
+            columns:
+              - column:
+                  name: currency
+                  type: VARCHAR(10)
+                  defaultValue: USD
+                  constraints:
+                    nullable: false

@@ -4,6 +4,7 @@ import com.example.bankcards.dto.CardDTO;
 import com.example.bankcards.dto.CreateCardDTO;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.security.PanHashEncoder;
@@ -16,10 +17,8 @@ import com.example.bankcards.util.PanMasker;
 import com.example.bankcards.util.mapper.CardMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -40,8 +39,8 @@ public class CardServiceImpl implements CardService {
     private final TransactionService transactionService;
     private final UserRepository userRepository;
 
-    @Autowired
-    public CardServiceImpl(CardRepository cardRepository, CardMapper cardMapper, PanHashEncoder panHashEncoder, TransactionService transactionService, UserRepository userRepository) {
+    public CardServiceImpl(CardRepository cardRepository, CardMapper cardMapper, PanHashEncoder panHashEncoder,
+                           TransactionService transactionService, UserRepository userRepository) {
         this.cardRepository = cardRepository;
         this.cardMapper = cardMapper;
         this.panHashEncoder = panHashEncoder;
@@ -50,6 +49,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean isExists(Long id) {
         logger.info("Checking if card exists with ID {}", id);
         return cardRepository.existsById(id);
@@ -57,26 +57,24 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public void transferBalance(Long userId, Long sourceCardId, Long targetCardId, BigDecimal amount) {
-
-        logger.info("Transfer between user cards for userId {}, sourceCardId {}, targetCardId {}, amount {}", userId, sourceCardId, targetCardId, amount);
+        logger.info("Transfer for userId {}, sourceCardId {}, targetCardId {}, amount {}", userId, sourceCardId, targetCardId, amount);
 
         Card sourceCard = getCardEntityById(sourceCardId);
         Card targetCard = getCardEntityById(targetCardId);
 
         TransactionValidator.validateTransferBetweenUserCards(userId, sourceCard, targetCard, amount);
 
-        logger.info("Performing transfer between cards");
         sourceCard.debit(amount);
         targetCard.credit(amount);
         cardRepository.save(sourceCard);
         cardRepository.save(targetCard);
-        logger.info("Transfer completed successfully");
         transactionService.formTransactions(sourceCard, targetCard, amount);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BigDecimal getBalance(Long userId, Long cardId) {
-        logger.info("Getting balance for user with id {} and card with id {}", userId, cardId);
+        logger.info("Getting balance for userId {} and cardId {}", userId, cardId);
         Card card = getCardEntityById(cardId);
         UserValidator.validateOwner(userId, card);
         return card.getBalance();
@@ -100,7 +98,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public void requestCardBlock(Long userId, Long cardId) {
-        logger.info("Requesting card block for card with id {} by user with id {}", cardId, userId);
+        logger.info("Requesting card block for cardId {} by userId {}", cardId, userId);
         Card card = getCardEntityById(cardId);
         UserValidator.validateOwner(userId, card);
         card.requestBlock();
@@ -109,10 +107,9 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public CardDTO create(CreateCardDTO createCardDTO) {
-        logger.info("Creating card for cardDTO {}", createCardDTO);
+        logger.info("Creating card for userId {}", createCardDTO.userId());
 
         String rawPan = createCardDTO.pan();
-
         Card card = cardMapper.toCard(createCardDTO);
 
         User user = userRepository.findById(createCardDTO.userId())
@@ -130,37 +127,38 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CardDTO findById(Long id) {
         logger.info("Finding card by ID {}", id);
         return cardMapper.toCardDTO(getCardEntityById(id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CardDTO> findByUserId(Long userId, Pageable pageable) {
-        logger.info("Finding cards by user ID {}", userId);
-        Page<Card> cards = cardRepository.findByUserId(userId, pageable);
-        return cardMapper.toCardDTOPage(cards);
+        logger.info("Finding cards by userId {}", userId);
+        return cardMapper.toCardDTOPage(cardRepository.findByUserId(userId, pageable));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CardDTO> search(String query, Pageable pageable) {
         logger.info("Searching cards for query {}", query);
-        Page<Card> cards = cardRepository.findByLastFour(query, pageable);
-        return cardMapper.toCardDTOPage(cards);
+        return cardMapper.toCardDTOPage(cardRepository.findByLastFour(query, pageable));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CardDTO> search(Long userId, String query, Pageable pageable) {
         logger.info("Searching cards for userId {} and query {}", userId, query);
-        Page<Card> cards = cardRepository.findByUserIdAndLastFour(userId, query, pageable);
-        return cardMapper.toCardDTOPage(cards);
+        return cardMapper.toCardDTOPage(cardRepository.findByUserIdAndLastFour(userId, query, pageable));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CardDTO> findAll(Pageable pageable) {
         logger.info("Finding all cards");
-        Page<Card> cards = cardRepository.findAll(pageable);
-        return cardMapper.toCardDTOPage(cards);
+        return cardMapper.toCardDTOPage(cardRepository.findAll(pageable));
     }
 
     @Override

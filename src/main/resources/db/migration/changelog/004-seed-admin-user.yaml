@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4
+      author: developer
+      context: "!test"
+      changes:
+        - insert:
+            schemaName: bank_rest_service
+            tableName: users
+            columns:
+              - column:
+                  name: full_name
+                  value: "Admin"
+              - column:
+                  name: email
+                  value: "admin@example.com"
+              - column:
+                  name: phone_number
+                  value: "+0000000000"
+              - column:
+                  name: password_hash
+                  value: "$2a$12$Q7jx4uRk6xuYaT2oW6HmkOJQzJbNoKm1O3PYyBHBJ5ujgiFKxTRou"
+              - column:
+                  name: user_role
+                  value: "ADMIN"
+              - column:
+                  name: user_status
+                  value: "ACTIVE"

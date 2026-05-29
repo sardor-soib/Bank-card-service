@@ -2,6 +2,7 @@ package com.example.bankcards.controller;
 
 import com.example.bankcards.config.CustomUserDetails;
 import com.example.bankcards.dto.CardDTO;
+import com.example.bankcards.dto.TransferRequest;
 import com.example.bankcards.service.CardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,7 +65,7 @@ class UserCardControllerTest {
     @Test
     void transferBalance_delegates() {
         BigDecimal amount = new BigDecimal("50.00");
-        controller.transferBalance(authentication, 1L, 2L, amount);
+        controller.transferBalance(authentication, 1L, 2L, new TransferRequest(amount));
 
         verify(cardService).transferBalance(1L, 1L, 2L, amount);
     }

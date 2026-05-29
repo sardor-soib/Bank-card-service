@@ -6,7 +6,6 @@ import com.example.bankcards.service.CardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -23,7 +22,6 @@ public class CardController {
 
     private final CardService cardService;
 
-    @Autowired
     public CardController(CardService cardService) {
         this.cardService = cardService;
     }
@@ -59,7 +57,7 @@ public class CardController {
     }
 
     @Operation(summary = "Create a new card", description = "Add a new card to the database")
-    @PostMapping()
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CardDTO createCard(@Valid @RequestBody CreateCardDTO createCardDTO) {
         return cardService.create(createCardDTO);
@@ -72,11 +70,10 @@ public class CardController {
         return cardService.update(id, cardDto);
     }
 
-    @Operation(summary = "Delete a car", description = "Delete a card from the database by ID")
+    @Operation(summary = "Delete a card", description = "Delete a card from the database by ID")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCard(@PathVariable Long id) {
         cardService.remove(id);
     }
 }
-

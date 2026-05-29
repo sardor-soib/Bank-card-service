@@ -75,7 +75,7 @@ public class SecurityConfig {
     @Bean
     @Lazy
     public JwtDecoder jwtDecoder() {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(auth0Properties.getIssuer()).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(auth0Properties.getJwksUrl()).build();
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(auth0Properties.getIssuer());
         OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator());
         decoder.setJwtValidator(withAudience);

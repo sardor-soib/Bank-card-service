@@ -1,5 +1,6 @@
 package com.example.bankcards.util.mapper;
 
+import com.example.bankcards.dto.CreateUserDTO;
 import com.example.bankcards.dto.UserDTO;
 import com.example.bankcards.entity.User;
 import jakarta.validation.constraints.NotNull;
@@ -12,8 +13,14 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    @Mapping(target = "password", ignore = true)
     UserDTO toDTO(@NotNull User user);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "cards", ignore = true)
+    @Mapping(target = "transactions", ignore = true)
+    @Mapping(target = "sub", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    User toEntity(@NotNull CreateUserDTO createUserDTO);
 
     @Mapping(target = "cards", ignore = true)
     @Mapping(target = "transactions", ignore = true)
@@ -22,10 +29,7 @@ public interface UserMapper {
 
     List<UserDTO> toDTOList(@NotNull List<User> users);
 
-    List<User> toEntityList(@NotNull List<UserDTO> userDTOs);
-
     default Page<UserDTO> toDTOPage(@NotNull Page<User> userPage) {
         return userPage.map(this::toDTO);
     }
 }
-

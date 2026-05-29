@@ -1,7 +1,9 @@
 package com.example.bankcards.service.impl;
 
+import com.example.bankcards.dto.CreateUserDTO;
 import com.example.bankcards.dto.UserDTO;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.util.Role;
 import com.example.bankcards.util.mapper.UserMapper;
@@ -17,7 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +38,8 @@ class UserServiceImplTest {
     UserRepository userRepository;
     @Mock
     UserMapper userMapper;
+    @Mock
+    PasswordEncoder passwordEncoder;
 
     @InjectMocks
     UserServiceImpl userServiceImpl;
@@ -44,7 +48,7 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        user = org.mockito.Mockito.mock(User.class);
+        user = mock(User.class);
         when(user.getId()).thenReturn(1L);
     }
 
@@ -57,16 +61,18 @@ class UserServiceImplTest {
 
     @Test
     void create_savesEntityAndReturnsDto() {
-        UserDTO inputDto = UserDTO.builder().fullName("jane").build();
+        CreateUserDTO inputDto = new CreateUserDTO("jane", "jane@example.com", "+1234567890", "secret", "USER");
         UserDTO returnedDto = UserDTO.builder().id(1L).fullName("jane").build();
-        User mapped = org.mockito.Mockito.mock(User.class);
-        User saved = org.mockito.Mockito.mock(User.class);
+        User mapped = mock(User.class);
+        User saved = mock(User.class);
 
+        when(passwordEncoder.encode("secret")).thenReturn("hashed");
         when(userMapper.toEntity(inputDto)).thenReturn(mapped);
         when(userRepository.save(mapped)).thenReturn(saved);
         when(userMapper.toDTO(saved)).thenReturn(returnedDto);
 
         assertThat(userServiceImpl.create(inputDto)).isSameAs(returnedDto);
+        verify(mapped).setPassword("hashed");
     }
 
     @Test
@@ -112,11 +118,9 @@ class UserServiceImplTest {
 
     @Test
     void findAllByRole_invalidRole_throws() {
-
         Throwable thrown = catchThrowable(() -> userServiceImpl.findAllByRole("BAD_ROLE", PageRequest.of(0, 10)));
 
         assertThat(thrown).as("Expected IllegalArgumentException for invalid role").isInstanceOf(IllegalArgumentException.class);
-
     }
 
     @Test
@@ -134,7 +138,7 @@ class UserServiceImplTest {
     @Test
     void update_existing_updatesFieldsAndSaves() {
         UserDTO dto = UserDTO.builder().id(1L).fullName("updated-name").role("ADMIN").build();
-        User saved = org.mockito.Mockito.mock(User.class);
+        User saved = mock(User.class);
         UserDTO returned = UserDTO.builder().id(1L).build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -153,7 +157,6 @@ class UserServiceImplTest {
         Throwable thrown = catchThrowable(() -> userServiceImpl.update(404L, UserDTO.builder().id(404L).build()));
 
         assertThat(thrown).as("Expected ResourceNotFoundException for missing user").isInstanceOf(ResourceNotFoundException.class);
-
         verify(userRepository, never()).save(any());
     }
 

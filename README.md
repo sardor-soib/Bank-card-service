@@ -52,7 +52,7 @@ Or export variables first:
 
 ```bash
 export DB_URL=jdbc:postgresql://localhost:5432/bank-rest-service
-export DB_USERNAME=postgres
+export DB_USERNAME=postgres.yaml
 export DB_PASSWORD=12345
 export BANK_CARDS_PAN_HASH_SECRET=my-secret-pan-hash-key-32chars!!
 

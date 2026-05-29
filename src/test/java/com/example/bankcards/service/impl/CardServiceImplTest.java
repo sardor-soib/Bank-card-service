@@ -4,6 +4,7 @@ import com.example.bankcards.dto.CardDTO;
 import com.example.bankcards.dto.CreateCardDTO;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.security.PanHashEncoder;
@@ -23,7 +24,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -187,7 +187,7 @@ class CardServiceImplTest {
     @Test
     void create_appliesPanDataAndSaves() {
         CreateCardDTO dto = new CreateCardDTO("4111111111111111", "John", "2030-01-01",
-                "VISA", "DEBIT", new BigDecimal("0"), "ACTIVE", 1L);
+                "VISA", "DEBIT", new BigDecimal("0"), "ACTIVE", "USD", 1L);
         Card mappedCard = org.mockito.Mockito.mock(Card.class);
         Card savedCard = org.mockito.Mockito.mock(Card.class);
         CardDTO returnedDto = CardDTO.builder().id(42L).build();

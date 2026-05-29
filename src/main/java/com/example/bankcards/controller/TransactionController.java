@@ -3,18 +3,17 @@ package com.example.bankcards.controller;
 import com.example.bankcards.dto.TransactionDTO;
 import com.example.bankcards.security.SecurityUtils;
 import com.example.bankcards.service.TransactionService;
-import com.example.bankcards.service.impl.TransactionServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Validated
@@ -24,9 +23,8 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    @Autowired
-    public TransactionController(TransactionServiceImpl transactionServiceImpl) {
-        this.transactionService = transactionServiceImpl;
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 
     @Operation(summary = "Find transaction by ID", description = "Retrieves a specific transaction by its ID")
@@ -46,25 +44,5 @@ public class TransactionController {
     @GetMapping("/card/{cardId}")
     public Page<TransactionDTO> findTransactionsForCard(@PathVariable Long cardId, Pageable pageable) {
         return transactionService.findByCardId(cardId, pageable);
-    }
-
-    @Operation(summary = "Create a new transaction", description = "Creates a new transaction for a specific card")
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public TransactionDTO createTransaction(@Valid @RequestBody TransactionDTO transactionDTO) {
-        return transactionService.create(transactionDTO);
-    }
-
-    @Operation(summary = "Update an existing transaction", description = "Updates an existing transaction by its ID")
-    @PutMapping("/{id}")
-    public TransactionDTO updateTransaction(@NotNull @PathVariable Long id, @Valid @RequestBody TransactionDTO transactionDTO) {
-        return transactionService.update(id, transactionDTO);
-    }
-
-    @Operation(summary = "Delete a transaction", description = "Deletes a specific transaction by its ID")
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteTransaction(@NotNull @PathVariable Long id) {
-        transactionService.remove(id);
     }
 }

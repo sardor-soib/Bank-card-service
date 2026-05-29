@@ -7,8 +7,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 @EnableConfigurationProperties(CardSecurityProperties.class)
 public class BankRestApplication {
 
@@ -22,5 +24,3 @@ public class BankRestApplication {
         log.info("Active profiles: {}", (Object) env.getActiveProfiles());
     }
 }
-
-

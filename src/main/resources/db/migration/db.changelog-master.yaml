@@ -3,3 +3,13 @@ databaseChangeLog:
       file: db/migration/changelog/001-initial-schema.yaml
   - include:
       file: db/migration/changelog/002-add-sub-to-users.yaml
+  - include:
+      file: db/migration/changelog/003-add-currency-to-cards.yaml
+  - include:
+      file: db/migration/changelog/004-seed-admin-user.yaml
+  - include:
+      file: db/migration/changelog/007-seed-test-user.yaml
+  - include:
+      file: db/migration/changelog/005-seed-cards.yaml
+  - include:
+      file: db/migration/changelog/006-seed-transactions.yaml

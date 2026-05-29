@@ -1,5 +1,6 @@
 package com.example.bankcards.controller;
 
+import com.example.bankcards.dto.CreateUserDTO;
 import com.example.bankcards.dto.UserDTO;
 import com.example.bankcards.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -78,7 +79,7 @@ class UserControllerTest {
 
     @Test
     void createUser_delegates() {
-        UserDTO dto = UserDTO.builder().fullName("jane").build();
+        CreateUserDTO dto = new CreateUserDTO("jane", "jane@example.com", "+1234567890", "secret", "USER");
         UserDTO returned = UserDTO.builder().id(1L).fullName("jane").build();
         when(userService.create(dto)).thenReturn(returned);
 

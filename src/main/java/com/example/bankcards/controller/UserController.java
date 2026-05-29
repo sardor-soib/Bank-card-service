@@ -1,12 +1,12 @@
 package com.example.bankcards.controller;
 
+import com.example.bankcards.dto.CreateUserDTO;
 import com.example.bankcards.dto.UserDTO;
 import com.example.bankcards.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -23,7 +23,6 @@ public class UserController {
 
     private final UserService userService;
 
-    @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -67,8 +66,8 @@ public class UserController {
     @Operation(summary = "Create a new user", description = "Creates a new user with the provided details")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDTO createUser(@NotNull @Valid @RequestBody UserDTO userDTO) {
-        return userService.create(userDTO);
+    public UserDTO createUser(@NotNull @Valid @RequestBody CreateUserDTO createUserDTO) {
+        return userService.create(createUserDTO);
     }
 
     @Operation(summary = "Update a user", description = "Updates an existing user with the provided details")

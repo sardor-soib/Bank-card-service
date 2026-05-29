@@ -1,10 +1,11 @@
 package com.example.bankcards.service;
 
-import com.example.bankcards.dto.UserDTO;;
+import com.example.bankcards.dto.CreateUserDTO;
+import com.example.bankcards.dto.UserDTO;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 
 public interface UserService {
 
@@ -14,7 +15,7 @@ public interface UserService {
 
     void deactivateUser(@NotNull Long userId);
 
-    UserDTO create(@NotNull UserDTO userDTO);
+    UserDTO create(@NotNull CreateUserDTO createUserDTO);
 
     UserDTO findById(@NotNull Long id);
 

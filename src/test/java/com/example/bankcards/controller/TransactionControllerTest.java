@@ -15,7 +15,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class TransactionControllerTest {
 
@@ -58,30 +59,5 @@ class TransactionControllerTest {
         when(transactionServiceImpl.findByCardId(7L, pageable)).thenReturn(page);
 
         assertThat(controller.findTransactionsForCard(7L, pageable)).isSameAs(page);
-    }
-
-    @Test
-    void createTransaction_delegates() {
-        TransactionDTO dto = TransactionDTO.builder().build();
-        TransactionDTO returned = TransactionDTO.builder().id(1L).build();
-        when(transactionServiceImpl.create(dto)).thenReturn(returned);
-
-        assertThat(controller.createTransaction(dto)).isSameAs(returned);
-    }
-
-    @Test
-    void updateTransaction_delegates() {
-        TransactionDTO dto = TransactionDTO.builder().build();
-        TransactionDTO returned = TransactionDTO.builder().id(1L).build();
-        when(transactionServiceImpl.update(1L, dto)).thenReturn(returned);
-
-        assertThat(controller.updateTransaction(1L, dto)).isSameAs(returned);
-    }
-
-    @Test
-    void deleteTransaction_delegates() {
-        controller.deleteTransaction(1L);
-
-        verify(transactionServiceImpl).remove(1L);
     }
 }

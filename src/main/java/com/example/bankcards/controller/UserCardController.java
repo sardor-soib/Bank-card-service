@@ -1,11 +1,12 @@
 package com.example.bankcards.controller;
 
 import com.example.bankcards.dto.CardDTO;
+import com.example.bankcards.dto.TransferRequest;
 import com.example.bankcards.security.SecurityUtils;
 import com.example.bankcards.service.CardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,7 +15,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-
 
 @RestController
 @Validated
@@ -25,13 +25,12 @@ public class UserCardController {
 
     private final CardService cardService;
 
-    @Autowired
     public UserCardController(CardService cardService) {
         this.cardService = cardService;
     }
 
     @Operation(summary = "Get cards by user id", description = "Retrieve a list of cards for a specific user")
-    @GetMapping()
+    @GetMapping
     public Page<CardDTO> getCardsForUser(Authentication authentication, Pageable pageable) {
         Long userId = SecurityUtils.getCurrentUserId(authentication);
         return cardService.findByUserId(userId, pageable);
@@ -46,9 +45,11 @@ public class UserCardController {
 
     @Operation(summary = "Transfer balance", description = "Transfer balance from one card to another")
     @PostMapping("/{cardId}/transfers")
-    public void transferBalance(Authentication authentication, @PathVariable Long cardId, @RequestParam(name = "targetCardId") Long targetCardId, @RequestBody BigDecimal amount) {
+    public void transferBalance(Authentication authentication, @PathVariable Long cardId,
+                                @RequestParam(name = "targetCardId") Long targetCardId,
+                                @Valid @RequestBody TransferRequest request) {
         Long userId = SecurityUtils.getCurrentUserId(authentication);
-        cardService.transferBalance(userId, cardId, targetCardId, amount);
+        cardService.transferBalance(userId, cardId, targetCardId, request.amount());
     }
 
     @Operation(summary = "Request a card block", description = "User request for block a specific card")

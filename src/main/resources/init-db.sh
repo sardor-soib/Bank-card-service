@@ -12,7 +12,7 @@ psql -v ON_ERROR_STOP=1 --username "postgres" <<-EOSQL
     \$\$;
 EOSQL
 
-# Create user and grant privileges (Optional: postgres user usually exists)
+# Create user and grant privileges (Optional: postgres.yaml user usually exists)
 psql -v ON_ERROR_STOP=1 --username "postgres" <<-EOSQL
     DO \$\$
     BEGIN

@@ -13,22 +13,22 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false)
-    Long id;
+    private Long id;
 
     @Column(name = "full_name", nullable = false)
-    String fullName;
+    private String fullName;
 
     @Column(name = "email", nullable = false, unique = true)
-    String email;
+    private String email;
 
     @Column(name = "sub", unique = true)
-    String sub;
+    private String sub;
 
     @Column(name = "phone_number", nullable = false)
-    String phoneNumber;
+    private String phoneNumber;
 
     @Column(name = "password_hash", nullable = false)
-    String password;
+    private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role")
@@ -57,6 +57,19 @@ public class User {
 
     public User() {
 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+
+        User user = (User) o;
+        return getId().equals(user.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
     }
 
     public void activateUser() {

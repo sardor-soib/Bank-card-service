@@ -3,6 +3,7 @@ package com.example.bankcards.entity;
 import com.example.bankcards.util.CardBrand;
 import com.example.bankcards.util.CardStatus;
 import com.example.bankcards.util.CardType;
+import com.example.bankcards.util.Currency;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -48,6 +49,10 @@ public class Card {
     @Column(name = "balance", nullable = false)
     private BigDecimal balance;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency", nullable = false)
+    private Currency currency;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User user;
@@ -68,6 +73,19 @@ public class Card {
         this.user = user;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Card card = (Card) o;
+        return getId().equals(card.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
+    }
+
     public void applyPanData(String binNumber, String lastFour, String maskedPan, String panHash) {
         this.binNumber = binNumber;
         this.lastFour = lastFour;
@@ -76,6 +94,9 @@ public class Card {
     }
 
     public void debit(BigDecimal amount) {
+        if (this.balance.compareTo(amount) < 0) {
+            throw new IllegalStateException("Insufficient funds");
+        }
         this.balance = this.balance.subtract(amount);
     }
 
@@ -109,6 +130,14 @@ public class Card {
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
+    }
+
+    public Currency getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(Currency currency) {
+        this.currency = currency;
     }
 
     public CardType getCardType() {
