@@ -2,7 +2,6 @@ package com.example.bankcards.config;
 
 import com.example.bankcards.security.JwtToUserAuthenticationConverter;
 import com.example.bankcards.util.Role;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -31,15 +30,11 @@ public class SecurityConfig {
     private static final String ADMIN = Role.ADMIN.name();
     private static final String USER = Role.USER.name();
     private final JwtToUserAuthenticationConverter jwtToUserAuthenticationConverter;
+    private final Auth0Properties auth0Properties;
 
-    @Value("${auth0.domain}")
-    private String issuerUri;
-
-    @Value("${auth0.audience}")
-    private String auth0Audience;
-
-    public SecurityConfig(JwtToUserAuthenticationConverter jwtToUserAuthenticationConverter) {
+    public SecurityConfig(JwtToUserAuthenticationConverter jwtToUserAuthenticationConverter, Auth0Properties auth0Properties) {
         this.jwtToUserAuthenticationConverter = jwtToUserAuthenticationConverter;
+        this.auth0Properties = auth0Properties;
     }
 
     @Bean
@@ -80,9 +75,8 @@ public class SecurityConfig {
     @Bean
     @Lazy
     public JwtDecoder jwtDecoder() {
-        String issuer = "https://" + issuerUri + "/";
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(issuer + ".well-known/jwks.json").build();
-        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(auth0Properties.getIssuer()).build();
+        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(auth0Properties.getIssuer());
         OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator());
         decoder.setJwtValidator(withAudience);
         return decoder;
@@ -95,7 +89,7 @@ public class SecurityConfig {
 
     private OAuth2TokenValidator<Jwt> audienceValidator() {
         return jwt -> {
-            if (jwt.getAudience().contains(auth0Audience)) {
+            if (jwt.getAudience().contains(auth0Properties.getAudience())) {
                 return OAuth2TokenValidatorResult.success();
             }
             return OAuth2TokenValidatorResult.failure(
